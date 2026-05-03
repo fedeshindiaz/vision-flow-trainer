@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Activity, Download, Maximize2, Minimize2, Pause, Play, RotateCcw, Save, Shield, SkipForward, Trash2,
