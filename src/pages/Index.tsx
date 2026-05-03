@@ -553,6 +553,7 @@ const Index = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Sesión completada</DialogTitle>
+            <DialogDescription>Guardá la sesión o iniciá una nueva.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p>Completaste {totalSets} {totalSets === 1 ? "serie" : "series"} de {exDef.name}.</p>
