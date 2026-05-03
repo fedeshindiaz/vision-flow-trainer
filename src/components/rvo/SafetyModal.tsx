@@ -19,6 +19,7 @@ export function SafetyModal({ open, onAccept, onClose }: Props) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Indicaciones de seguridad</DialogTitle>
+          <DialogDescription>Leé y aceptá las indicaciones antes de comenzar.</DialogDescription>
         </DialogHeader>
         <ul className="space-y-3 text-sm leading-relaxed">
           {ITEMS.map((t, i) => (
