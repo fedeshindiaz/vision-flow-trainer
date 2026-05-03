@@ -257,6 +257,9 @@ const Index = () => {
     safeSet(HISTORY_KEY, next);
     toast.success("Sesión guardada");
     setShowDone(false);
+    setSymptomBefore(0);
+    setSymptomAfter(0);
+    setClarity("clear");
     handleReset();
   };
 
