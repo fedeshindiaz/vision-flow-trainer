@@ -170,9 +170,11 @@ const Index = () => {
       setState("playing");
       startTick();
     } else if (state === "playing") {
-      // pause: freeze elapsed
+      // pause: snapshot exact elapsed from anchor
       cancelAnimationFrame(tickRef.current);
-      elapsedRef.current = elapsed;
+      const exact = (performance.now() - segStartRef.current) / 1000 + elapsedRef.current;
+      elapsedRef.current = Math.min(exact, segLenRef.current);
+      setElapsed(elapsedRef.current);
       setState("paused");
     } else if (state === "paused") {
       segStartRef.current = performance.now();
