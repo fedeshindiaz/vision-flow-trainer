@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Activity, Download, Maximize2, Minimize2, Pause, Play, RotateCcw, Save, Shield, SkipForward, Trash2,
@@ -170,9 +170,11 @@ const Index = () => {
       setState("playing");
       startTick();
     } else if (state === "playing") {
-      // pause: freeze elapsed
+      // pause: snapshot exact elapsed from anchor
       cancelAnimationFrame(tickRef.current);
-      elapsedRef.current = elapsed;
+      const exact = (performance.now() - segStartRef.current) / 1000 + elapsedRef.current;
+      elapsedRef.current = Math.min(exact, segLenRef.current);
+      setElapsed(elapsedRef.current);
       setState("paused");
     } else if (state === "paused") {
       segStartRef.current = performance.now();
@@ -217,9 +219,10 @@ const Index = () => {
     }
   }, [state]);
 
-  const segTotal = state === "resting" ? restDuration : duration;
-  const remaining = Math.max(0, segTotal - elapsed);
-  const progress = segTotal > 0 ? Math.min(1, elapsed / segTotal) : 0;
+  const segTotal = state === "resting" ? restDuration : state === "done" ? duration : duration;
+  const safeElapsed = state === "done" ? segTotal : Math.min(elapsed, segTotal);
+  const remaining = Math.max(0, segTotal - safeElapsed);
+  const progress = segTotal > 0 ? Math.min(1, safeElapsed / segTotal) : 0;
 
   // Fullscreen
   const toggleFullscreen = async () => {
@@ -254,6 +257,9 @@ const Index = () => {
     safeSet(HISTORY_KEY, next);
     toast.success("Sesión guardada");
     setShowDone(false);
+    setSymptomBefore(0);
+    setSymptomAfter(0);
+    setClarity("clear");
     handleReset();
   };
 
@@ -547,6 +553,7 @@ const Index = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Sesión completada</DialogTitle>
+            <DialogDescription>Guardá la sesión o iniciá una nueva.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p>Completaste {totalSets} {totalSets === 1 ? "serie" : "series"} de {exDef.name}.</p>

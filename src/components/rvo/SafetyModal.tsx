@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -19,6 +19,7 @@ export function SafetyModal({ open, onAccept, onClose }: Props) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Indicaciones de seguridad</DialogTitle>
+          <DialogDescription>Leé y aceptá las indicaciones antes de comenzar.</DialogDescription>
         </DialogHeader>
         <ul className="space-y-3 text-sm leading-relaxed">
           {ITEMS.map((t, i) => (
