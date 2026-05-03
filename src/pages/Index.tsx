@@ -219,9 +219,10 @@ const Index = () => {
     }
   }, [state]);
 
-  const segTotal = state === "resting" ? restDuration : duration;
-  const remaining = Math.max(0, segTotal - elapsed);
-  const progress = segTotal > 0 ? Math.min(1, elapsed / segTotal) : 0;
+  const segTotal = state === "resting" ? restDuration : state === "done" ? duration : duration;
+  const safeElapsed = state === "done" ? segTotal : Math.min(elapsed, segTotal);
+  const remaining = Math.max(0, segTotal - safeElapsed);
+  const progress = segTotal > 0 ? Math.min(1, safeElapsed / segTotal) : 0;
 
   // Fullscreen
   const toggleFullscreen = async () => {
