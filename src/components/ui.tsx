@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { iconMap } from "../constants/modules";
 import { clamp } from "../utils";
 
