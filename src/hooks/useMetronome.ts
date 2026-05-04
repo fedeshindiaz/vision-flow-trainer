@@ -23,12 +23,8 @@ export function useMetronome(active: boolean, frequencyHz: number, soundEnabled:
   const freqRef = useRef(frequencyHz);
   const soundRef = useRef(soundEnabled);
 
-  useEffect(() => {
-    freqRef.current = frequencyHz;
-  }, [frequencyHz]);
-  useEffect(() => {
-    soundRef.current = soundEnabled;
-  }, [soundEnabled]);
+  freqRef.current = frequencyHz;
+  soundRef.current = soundEnabled;
 
   useEffect(() => {
     if (!active) return undefined;
