@@ -136,11 +136,34 @@ export function drawObjective(
   }
 
   if (config.mode === "saccade") {
-    const positions = getSaccadePositions(width, height, amplitude, config.direction);
-    const index = Math.floor(elapsed * frequencyHz) % positions.length;
-    x = positions[index].x;
-    y = positions[index].y;
+    const stepIndex = Math.floor(elapsed * frequencyHz);
+    if (config.direction === "lissajous") {
+      // "Infinito" en sacadas = posiciones aleatorias en cada paso
+      const pos = getRandomSaccadePosition(stepIndex, cx, cy, ax, ay);
+      x = pos.x;
+      y = pos.y;
+    } else {
+      const positions = getSaccadePositions(width, height, amplitude, config.direction);
+      const index = stepIndex % positions.length;
+      x = positions[index].x;
+      y = positions[index].y;
+    }
   }
 
   drawTarget(ctx, x, y, size, fill, label);
+}
+
+// Cache de posiciones aleatorias por paso para que el render sea estable dentro del mismo step
+const randomCache = new Map<number, { x: number; y: number }>();
+function getRandomSaccadePosition(step: number, cx: number, cy: number, ax: number, ay: number) {
+  const cached = randomCache.get(step);
+  if (cached) return cached;
+  // Limpiar cache para que no crezca indefinidamente
+  if (randomCache.size > 32) randomCache.clear();
+  const pos = {
+    x: cx + (Math.random() * 2 - 1) * ax,
+    y: cy + (Math.random() * 2 - 1) * ay,
+  };
+  randomCache.set(step, pos);
+  return pos;
 }

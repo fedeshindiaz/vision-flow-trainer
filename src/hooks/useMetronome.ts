@@ -2,51 +2,91 @@ import { useEffect, useRef, useState } from "react";
 
 type WebAudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
 
+// Singleton AudioContext: evita crear múltiples contextos al cambiar parámetros,
+// que era una causa de "sonidos rotos" o solapados.
+let sharedCtx: AudioContext | null = null;
+function getCtx(): AudioContext | null {
+  if (sharedCtx) return sharedCtx;
+  try {
+    const Ctor = window.AudioContext || (window as WebAudioWindow).webkitAudioContext;
+    if (!Ctor) return null;
+    sharedCtx = new Ctor();
+  } catch {
+    return null;
+  }
+  return sharedCtx;
+}
+
 export function useMetronome(active: boolean, frequencyHz: number, soundEnabled: boolean) {
   const [beat, setBeat] = useState(0);
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  // Refs para que cambios de frecuencia/sonido no reinicien el loop y causen clicks dobles.
+  const freqRef = useRef(frequencyHz);
+  const soundRef = useRef(soundEnabled);
 
   useEffect(() => {
-    if (!active || frequencyHz <= 0) return undefined;
+    freqRef.current = frequencyHz;
+  }, [frequencyHz]);
+  useEffect(() => {
+    soundRef.current = soundEnabled;
+  }, [soundEnabled]);
 
-    const intervalMs = 1000 / frequencyHz;
+  useEffect(() => {
+    if (!active) return undefined;
 
-    const click = () => {
-      setBeat((value) => value + 1);
+    let cancelled = false;
+    let timerId: number | undefined;
+    let nextTime = performance.now();
 
-      if (!soundEnabled) return;
-
+    const playClick = () => {
+      if (!soundRef.current) return;
+      const ctx = getCtx();
+      if (!ctx) return;
       try {
-        const AudioContextClass = window.AudioContext || (window as WebAudioWindow).webkitAudioContext;
-        if (!AudioContextClass) return;
-
-        audioCtxRef.current ??= new AudioContextClass();
-        const ctx = audioCtxRef.current;
-
         if (ctx.state === "suspended") void ctx.resume();
-
-        const oscillator = ctx.createOscillator();
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-
-        oscillator.frequency.value = 880;
-        oscillator.type = "sine";
-        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.008);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.07);
-        oscillator.connect(gain);
-        gain.connect(ctx.destination);
-        oscillator.start();
-        oscillator.stop(ctx.currentTime + 0.08);
+        osc.frequency.value = 880;
+        osc.type = "sine";
+        // Envelope con valores seguros (sin 0 absoluto en exponentialRamp)
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.18, t + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.08);
+        osc.onended = () => {
+          osc.disconnect();
+          gain.disconnect();
+        };
       } catch {
-        // Browsers may block audio until an explicit user gesture.
+        // Audio bloqueado por el navegador hasta gesto del usuario.
       }
     };
 
-    click();
-    const id = window.setInterval(click, intervalMs);
+    const tick = () => {
+      if (cancelled) return;
+      playClick();
+      setBeat((v) => v + 1);
 
-    return () => window.clearInterval(id);
-  }, [active, frequencyHz, soundEnabled]);
+      const f = Math.max(0.1, freqRef.current);
+      const interval = 1000 / f;
+      nextTime += interval;
+      const delay = Math.max(0, nextTime - performance.now());
+      // Si nos retrasamos demasiado (ej: pestaña en background), resincronizar.
+      if (performance.now() - nextTime > interval * 2) {
+        nextTime = performance.now() + interval;
+      }
+      timerId = window.setTimeout(tick, delay);
+    };
+
+    tick();
+
+    return () => {
+      cancelled = true;
+      if (timerId !== undefined) window.clearTimeout(timerId);
+    };
+  }, [active]);
 
   return beat;
 }
