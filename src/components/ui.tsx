@@ -50,8 +50,6 @@ export function SliderControl({
   unit: string;
   onChange: (value: number) => void;
 }) {
-  const pct = clamp(((value - min) / Math.max(1, max - min)) * 100, 0, 100);
-
   return (
     <label className="control-card">
       <span className="control-row">
@@ -69,7 +67,6 @@ export function SliderControl({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
       />
-      <span className="range-fill" style={{ "--fill": `${pct}%` } as CSSProperties} />
     </label>
   );
 }
