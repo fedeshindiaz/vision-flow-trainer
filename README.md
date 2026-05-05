@@ -34,18 +34,31 @@ Archivos principales:
 
 Para usar Cast real hace falta registrar un Custom Web Receiver en la Google Cast SDK Developer Console.
 
-1. Deployar la app en HTTPS publico.
-2. Verificar que `https://TU-DOMINIO/cast-receiver` abre la vista receiver.
-3. Crear una Custom Receiver Application en la consola de Google Cast.
-4. Usar como receiver URL: `https://TU-DOMINIO/cast-receiver`.
-5. Copiar el Receiver Application ID.
-6. Configurar la variable:
+Flujo recomendado antes del registro:
+
+1. Probar localmente que `http://localhost:5173/cast-receiver` abre la pantalla receiver.
+2. Confirmar que esa pantalla muestra solo el canvas visual y un overlay minimo, sin paneles de configuracion.
+3. Deployar la app en una URL publica HTTPS.
+4. Abrir directamente `https://TU-DOMINIO/cast-receiver` y confirmar que no da 404.
+5. Registrar esa URL como Custom Receiver en Google Cast SDK Developer Console.
+6. Copiar el Receiver Application ID.
+7. Configurar la variable:
 
 ```bash
 VITE_CAST_APP_ID=TU_RECEIVER_APPLICATION_ID
 ```
 
+8. Rebuild/redeployar la app para que el sender web use ese App ID.
+
 Sin `VITE_CAST_APP_ID`, la app sigue funcionando normal y el boton muestra `Cast no configurado`.
+
+Receiver URL a registrar:
+
+```text
+https://TU-DOMINIO/cast-receiver
+```
+
+En hosts de SPA, la ruta directa `/cast-receiver` debe servir `index.html`. Si el deploy devuelve 404 al abrir esa URL directamente, configurar fallback/rewrite a `index.html` antes de registrar el receiver. En Netlify suele hacerse con `_redirects` o `netlify.toml`; en Vercel, con rewrites si el preset no lo resuelve automaticamente.
 
 ### Protocolo de mensajes
 
