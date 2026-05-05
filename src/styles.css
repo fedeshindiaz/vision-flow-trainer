@@ -440,6 +440,26 @@ input[type="range"] {
   color: #64748b;
 }
 
+.parameter-settings {
+  gap: 8px;
+}
+
+.parameter-settings .split-grid {
+  gap: 8px;
+}
+
+.parameter-settings .stepper {
+  padding: 10px;
+}
+
+.parameter-settings .stepper-body {
+  margin-top: 8px;
+}
+
+.parameter-settings .stepper strong {
+  white-space: nowrap;
+}
+
 .session-controls {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

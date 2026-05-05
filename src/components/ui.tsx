@@ -93,18 +93,26 @@ export function Stepper({
   onChange: (value: number) => void;
   disabled?: boolean;
 }) {
+  const precision = getDecimalPrecision(step);
+  const formattedValue = precision > 0 ? value.toFixed(precision) : String(value);
+  const changeBy = (delta: number) => {
+    const nextValue = clamp(value + delta, min, max);
+
+    onChange(Number(nextValue.toFixed(precision)));
+  };
+
   return (
     <div className={`stepper ${disabled ? "control-disabled" : ""}`}>
       <span className="stepper-label">{label}</span>
       <div className="stepper-body">
-        <button type="button" disabled={disabled} onClick={() => onChange(clamp(value - step, min, max))}>
-          −
+        <button type="button" disabled={disabled} onClick={() => changeBy(-step)}>
+          -
         </button>
         <strong>
-          {value}
+          {formattedValue}
           <small>{unit}</small>
         </strong>
-        <button type="button" disabled={disabled} onClick={() => onChange(clamp(value + step, min, max))}>
+        <button type="button" disabled={disabled} onClick={() => changeBy(step)}>
           +
         </button>
       </div>
@@ -120,4 +128,10 @@ export function InfoCard({ label, title, text }: { label: string; title: string;
       <p>{text}</p>
     </div>
   );
+}
+
+function getDecimalPrecision(value: number) {
+  const [, decimals = ""] = String(value).split(".");
+
+  return decimals.length;
 }

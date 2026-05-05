@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Icon, SliderControl, Stepper } from "../ui";
+import { Icon, Stepper } from "../ui";
 
 interface ParameterPanelProps {
   frequencyHz: number;
@@ -82,12 +82,20 @@ export function ParameterPanel({
             <Stepper label="Descanso" value={rest} unit="s" min={10} max={120} step={5} disabled={restLocked} onChange={onRestChange} />
           </div>
 
-          <SliderControl label="Frecuencia / velocidad" value={frequencyHz} min={0.1} max={3} step={0.1} unit=" Hz" onChange={onFrequencyChange} />
-          <SliderControl label="Amplitud" value={amplitude} min={10} max={80} step={5} unit=" %" onChange={onAmplitudeChange} />
-          <SliderControl label="Duración" value={duration} min={10} max={180} step={5} unit=" s" disabled={durationLocked} onChange={onDurationChange} />
-          <SliderControl label="Tamaño objetivo" value={targetSize} min={10} max={90} step={5} unit=" px" onChange={onTargetSizeChange} />
-          <SliderControl label="Separación fondo" value={density} min={32} max={180} step={4} unit=" px" onChange={onDensityChange} />
-          <SliderControl label="Tamaño franjas" value={stripeSize} min={4} max={120} step={4} unit=" px" onChange={onStripeSizeChange} />
+          <div className="split-grid">
+            <Stepper label="Frecuencia" value={frequencyHz} unit="Hz" min={0.1} max={3} step={0.1} onChange={onFrequencyChange} />
+            <Stepper label="Amplitud" value={amplitude} unit="%" min={10} max={80} step={5} onChange={onAmplitudeChange} />
+          </div>
+
+          <div className="split-grid">
+            <Stepper label="Duración" value={duration} unit="s" min={10} max={180} step={5} disabled={durationLocked} onChange={onDurationChange} />
+            <Stepper label="Tamaño objeto" value={targetSize} unit="px" min={10} max={90} step={5} onChange={onTargetSizeChange} />
+          </div>
+
+          <div className="split-grid">
+            <Stepper label="Separación fondo" value={density} unit="px" min={32} max={180} step={4} onChange={onDensityChange} />
+            <Stepper label="Tamaño franjas" value={stripeSize} unit="px" min={4} max={120} step={4} onChange={onStripeSizeChange} />
+          </div>
         </div>
       )}
     </section>

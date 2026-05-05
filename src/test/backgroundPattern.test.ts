@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getStripeWidth } from "../components/canvas/drawBackgroundPattern";
+import { getBackgroundElapsed } from "../components/canvas/getBackgroundElapsed";
 
 describe("background stripe sizing", () => {
   it("uses stripe size independently from stripe spacing", () => {
@@ -10,5 +11,27 @@ describe("background stripe sizing", () => {
   it("keeps stripe width inside the repeat period", () => {
     expect(getStripeWidth(48, 120)).toBeCloseTo(44.16, 2);
     expect(getStripeWidth(96, 1)).toBe(4);
+  });
+});
+
+describe("background and objective independence", () => {
+  it("keeps checkerboard static while saccade targets jump", () => {
+    expect(
+      getBackgroundElapsed(
+        { enabled: true, type: "checkerboard", direction: "right" },
+        { enabled: true, mode: "saccade", direction: "right" },
+        12.5,
+      ),
+    ).toBe(0);
+  });
+
+  it("keeps animated backgrounds available outside checkerboard saccades", () => {
+    expect(
+      getBackgroundElapsed(
+        { enabled: true, type: "stripes", direction: "right" },
+        { enabled: true, mode: "saccade", direction: "right" },
+        12.5,
+      ),
+    ).toBe(12.5);
   });
 });

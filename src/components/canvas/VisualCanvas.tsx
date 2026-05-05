@@ -3,6 +3,7 @@ import type { BackgroundConfig, ObjectiveConfig } from "../../types";
 import { useCanvasRenderer } from "../../hooks/useCanvasRenderer";
 import { drawBackgroundPattern } from "./drawBackgroundPattern";
 import { drawObjective } from "./drawObjective";
+import { getBackgroundElapsed } from "./getBackgroundElapsed";
 
 interface VisualCanvasProps {
   running: boolean;
@@ -42,7 +43,9 @@ export function VisualCanvas({
     running,
     resetKey,
     (ctx, width, height, elapsed) => {
-      drawBackgroundPattern(ctx, width, height, background, density, stripeSize, elapsed, frequencyHz);
+      const backgroundElapsed = getBackgroundElapsed(background, objective, elapsed);
+
+      drawBackgroundPattern(ctx, width, height, background, density, stripeSize, backgroundElapsed, frequencyHz);
       drawObjective(ctx, width, height, objective, elapsed, frequencyHz, amplitude, targetSize);
     },
     syncElapsedMs / 1000,
