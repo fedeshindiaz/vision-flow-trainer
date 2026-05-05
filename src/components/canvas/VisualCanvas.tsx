@@ -14,6 +14,7 @@ interface VisualCanvasProps {
   targetSize: number;
   density: number;
   stripeSize: number;
+  syncElapsedMs?: number;
 }
 
 export function VisualCanvas({
@@ -26,14 +27,22 @@ export function VisualCanvas({
   targetSize,
   density,
   stripeSize,
+  syncElapsedMs = 0,
 }: VisualCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  useCanvasRenderer(canvasRef, hostRef, running, resetKey, (ctx, width, height, elapsed) => {
-    drawBackgroundPattern(ctx, width, height, background, density, stripeSize, elapsed, frequencyHz);
-    drawObjective(ctx, width, height, objective, elapsed, frequencyHz, amplitude, targetSize);
-  });
+  useCanvasRenderer(
+    canvasRef,
+    hostRef,
+    running,
+    resetKey,
+    (ctx, width, height, elapsed) => {
+      drawBackgroundPattern(ctx, width, height, background, density, stripeSize, elapsed, frequencyHz);
+      drawObjective(ctx, width, height, objective, elapsed, frequencyHz, amplitude, targetSize);
+    },
+    syncElapsedMs / 1000,
+  );
 
   return (
     <div ref={hostRef} className="visual-canvas-host">

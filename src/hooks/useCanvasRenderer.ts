@@ -8,6 +8,7 @@ export function useCanvasRenderer(
   running: boolean,
   resetKey: number,
   draw: DrawFn,
+  syncElapsedSeconds = 0,
 ) {
   const elapsedRef = useRef(0);
   const lastRef = useRef(performance.now());
@@ -17,7 +18,7 @@ export function useCanvasRenderer(
   drawRef.current = draw;
 
   useEffect(() => {
-    elapsedRef.current = 0;
+    elapsedRef.current = syncElapsedSeconds;
     lastRef.current = performance.now();
     const canvas = canvasRef.current;
     const { width, height } = sizeRef.current;
@@ -28,7 +29,17 @@ export function useCanvasRenderer(
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawRef.current(ctx, width, height, elapsedRef.current);
     }
-  }, [canvasRef, resetKey]);
+  }, [canvasRef, resetKey, syncElapsedSeconds]);
+
+  useEffect(() => {
+    if (!syncElapsedSeconds) return;
+
+    const drift = Math.abs(elapsedRef.current - syncElapsedSeconds);
+
+    if (drift > 0.25) {
+      elapsedRef.current = syncElapsedSeconds;
+    }
+  }, [syncElapsedSeconds]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

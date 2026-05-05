@@ -467,6 +467,58 @@ input[type="range"] {
   color: #fff;
 }
 
+.cast-control {
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 132px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  background: #fff;
+  color: #334155;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: left;
+}
+
+.cast-control small {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.cast-control-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.cast-control-connected {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.cast-control-disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.cast-launcher {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0.001;
+}
+
 .viewport-shell {
   position: relative;
 }
@@ -532,6 +584,51 @@ input[type="range"] {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.cast-receiver-page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #020617;
+  color: #fff;
+}
+
+.cast-receiver-page .visual-canvas-host {
+  position: absolute;
+  inset: 0;
+}
+
+.cast-receiver-overlay {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  z-index: 2;
+  max-width: min(520px, calc(100vw - 48px));
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.42);
+  padding: 12px 14px;
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.cast-receiver-overlay span {
+  color: #fecaca;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.cast-receiver-overlay strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.cast-receiver-overlay p {
+  margin: 4px 0 0;
+  color: #e2e8f0;
 }
 
 .viewport-label {
@@ -790,6 +887,10 @@ input[type="range"] {
   }
 
   .header-actions {
+    width: 100%;
+  }
+
+  .cast-control {
     width: 100%;
   }
 

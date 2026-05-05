@@ -67,4 +67,5 @@ export const iconMap = {
   bg: "▦",
   mix: "▣",
   screen: "▣",
+  cast: "▱",
 } as const;

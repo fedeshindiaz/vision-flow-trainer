@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../styles.css";
+import { CastButton } from "../components/CastButton";
 import { VisualCanvas } from "../components/canvas/VisualCanvas";
 import { BackgroundPanel } from "../components/panels/BackgroundPanel";
 import { ObjectivePanel } from "../components/panels/ObjectivePanel";
@@ -11,41 +12,52 @@ import { SessionControls } from "../components/session/SessionControls";
 import { Icon, InfoCard } from "../components/ui";
 import { protocols } from "../config/protocols";
 import { APP_ICON_SRC, APP_NAME, APP_SUBTITLE } from "../constants/modules";
+import { useCastSender } from "../hooks/useCastSender";
+import { useExerciseSession } from "../hooks/useExerciseSession";
 import { playMetronomeClick, unlockMetronomeAudio, useMetronome } from "../hooks/useMetronome";
-import type { BackgroundConfig, ObjectiveConfig, Protocol, SessionState } from "../types";
-import { clamp, formatTime } from "../utils";
-
-const initialProtocol = protocols.find((protocol) => protocol.id === "okn-1") ?? protocols[0];
+import type { BackgroundConfig, ObjectiveConfig, Protocol } from "../types";
+import { formatTime } from "../utils";
 
 export default function Index() {
+  const session = useExerciseSession();
+  const castSender = useCastSender(session.sharedState);
   const [protocolCategory, setProtocolCategory] = useState("Todos");
   const [query, setQuery] = useState("");
-  const [selectedProtocolId, setSelectedProtocolId] = useState(initialProtocol.id);
-  const [background, setBackground] = useState<BackgroundConfig>(initialProtocol.background);
-  const [objective, setObjective] = useState<ObjectiveConfig>(initialProtocol.objective);
-  const [frequencyHz, setFrequencyHz] = useState(initialProtocol.frequencyHz);
-  const [amplitude, setAmplitude] = useState(42);
-  const [targetSize, setTargetSize] = useState(38);
-  const [density, setDensity] = useState(96);
-  const [stripeSize, setStripeSize] = useState(48);
-  const [duration, setDuration] = useState(45);
-  const [sets, setSets] = useState(3);
-  const [rest, setRest] = useState(30);
-  const [running, setRunning] = useState(false);
-  const [sessionState, setSessionState] = useState<SessionState>("idle");
-  const [timeLeft, setTimeLeft] = useState(45);
-  const [currentSet, setCurrentSet] = useState(1);
-  const [resetKey, setResetKey] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
   const [focusFeedback, setFocusFeedback] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [metronomeEnabled, setMetronomeEnabled] = useState(initialProtocol.metronome);
   const [showSafety, setShowSafety] = useState(false);
   const focusHostRef = useRef<HTMLDivElement | null>(null);
   const feedbackTimerRef = useRef<number | null>(null);
   const fullscreenWasActiveRef = useRef(false);
 
-  const selectedProtocol = protocols.find((protocol) => protocol.id === selectedProtocolId) ?? protocols[0];
+  const {
+    selectedProtocolId,
+    selectedProtocol,
+    background,
+    objective,
+    frequencyHz,
+    amplitude,
+    targetSize,
+    density,
+    stripeSize,
+    duration,
+    sets,
+    rest,
+    running,
+    sessionState,
+    timeLeft,
+    currentSet,
+    resetKey,
+    metronomeEnabled,
+    visualRunning,
+    metronomeActive,
+    sessionLocked,
+    playLabel,
+    skipLabel,
+    skipDisabled,
+    actions,
+  } = session;
 
   const visibleProtocols = useMemo(() => {
     const base =
@@ -64,10 +76,7 @@ export default function Index() {
     });
   }, [protocolCategory, query]);
 
-  const visualRunning = running && sessionState === "playing";
-  const metronomeActive = visualRunning && metronomeEnabled;
   const beat = useMetronome(metronomeActive, frequencyHz, soundEnabled, resetKey);
-  const sessionLocked = sessionState === "playing" || sessionState === "resting";
 
   const showFocusFeedback = useCallback((message: string) => {
     setFocusFeedback(message);
@@ -149,138 +158,50 @@ export default function Index() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [exitFocusMode, focusMode]);
 
-  const resetSession = () => {
-    setRunning(false);
-    setSessionState("idle");
-    setCurrentSet(1);
-    setTimeLeft(duration);
-    setResetKey((value) => value + 1);
-  };
-
-  const applyProtocol = (protocol: Protocol) => {
-    setSelectedProtocolId(protocol.id);
-    setBackground(protocol.background);
-    setObjective(protocol.objective);
-    setFrequencyHz(protocol.frequencyHz);
-    setMetronomeEnabled(protocol.metronome);
-    setRunning(false);
-    setSessionState("idle");
-    setCurrentSet(1);
-    setTimeLeft(duration);
-    setResetKey((value) => value + 1);
-  };
-
   const handleCategoryChange = (category: string) => {
     setProtocolCategory(category);
   };
 
-  useEffect(() => {
-    if (sessionState === "idle") setTimeLeft(duration);
-  }, [duration, sessionState]);
+  const applyProtocol = (protocol: Protocol) => {
+    actions.applyProtocol(protocol);
+    void castSender.sendCommand("SET_PROTOCOL", {
+      selectedProtocolId: protocol.id,
+      selectedProtocolName: protocol.name,
+      selectedProtocolCategory: protocol.category,
+      background: protocol.background,
+      objective: protocol.objective,
+      frequencyHz: protocol.frequencyHz,
+      metronomeEnabled: protocol.metronome,
+    });
+  };
 
-  useEffect(() => {
-    setCurrentSet((value) => clamp(value, 1, sets));
-  }, [sets]);
-
-  useEffect(() => {
-    if (!running) return undefined;
-
-    const id = window.setInterval(() => {
-      setTimeLeft((value) => Math.max(0, value - 1));
-    }, 1000);
-
-    return () => window.clearInterval(id);
-  }, [running]);
-
-  useEffect(() => {
-    if (!running || timeLeft > 0) return;
-
-    if (sessionState === "playing" && currentSet < sets) {
-      setSessionState("resting");
-      setTimeLeft(rest);
-      return;
-    }
-
-    if (sessionState === "playing") {
-      setRunning(false);
-      setSessionState("done");
-      setTimeLeft(0);
-      return;
-    }
-
-    if (sessionState === "resting" && currentSet < sets) {
-      setCurrentSet((value) => clamp(value + 1, 1, sets));
-      setSessionState("playing");
-      setTimeLeft(duration);
-      setResetKey((value) => value + 1);
-      return;
-    }
-
-    setRunning(false);
-    setSessionState("done");
-    setTimeLeft(0);
-  }, [running, timeLeft, sessionState, currentSet, sets, rest, duration]);
+  const resetSession = () => {
+    actions.resetSession();
+    void castSender.sendCommand("RESET", session.sharedState);
+  };
 
   const handlePlayPause = () => {
-    if (sessionState === "idle" || sessionState === "done") {
-      setCurrentSet(1);
-      setTimeLeft(duration);
-      setSessionState("playing");
-      setRunning(true);
-      setResetKey((value) => value + 1);
-      return;
-    }
-
-    if (!running && sessionState === "playing") {
-      setResetKey((value) => value + 1);
-    }
-
-    setRunning((value) => !value);
+    actions.handlePlayPause();
+    void castSender.sendCommand(running ? "PAUSE" : "PLAY", session.sharedState);
   };
 
   const handleSkip = () => {
-    if (sessionState === "resting") {
-      setCurrentSet((value) => clamp(value + 1, 1, sets));
-      setTimeLeft(duration);
-      setSessionState("playing");
-      setRunning(true);
-      setResetKey((value) => value + 1);
-      return;
-    }
-
-    if (sessionState === "playing" && currentSet < sets) {
-      setCurrentSet((value) => clamp(value + 1, 1, sets));
-      setTimeLeft(duration);
-      setResetKey((value) => value + 1);
-      return;
-    }
-
-    if (sessionState === "playing") {
-      setRunning(false);
-      setSessionState("done");
-      setTimeLeft(0);
-    }
+    actions.handleSkip();
+    void castSender.sendCommand("SKIP", session.sharedState);
   };
 
-  const playLabel =
-    sessionState === "resting"
-      ? running
-        ? "Pausar descanso"
-        : "Continuar"
-      : running
-        ? "Pausar"
-        : sessionState === "done"
-          ? "Repetir"
-          : "Iniciar";
-  const skipLabel = sessionState === "resting" ? "Saltar descanso" : sessionState === "playing" ? "Saltar serie" : "Saltar";
-  const skipDisabled = sessionState === "idle" || sessionState === "done";
+  const handleBackgroundChange = (value: BackgroundConfig) => {
+    actions.setBackground(value);
+    void castSender.sendCommand("SET_BACKGROUND", { background: value, updatedAt: Date.now() });
+  };
 
-  const handleFrequencyChange = (value: number) => {
-    setFrequencyHz(value);
+  const handleObjectiveChange = (value: ObjectiveConfig) => {
+    actions.setObjective(value);
+    void castSender.sendCommand("SET_OBJECTIVE", { objective: value, updatedAt: Date.now() });
+  };
 
-    if (visualRunning) {
-      setResetKey((current) => current + 1);
-    }
+  const handleParameterChange = (key: string, value: number) => {
+    void castSender.sendCommand("SET_PARAMETER", { [key]: value, updatedAt: Date.now() });
   };
 
   const handleToggleSound = () => {
@@ -334,10 +255,11 @@ export default function Index() {
       </div>
     </div>
   );
+  const appFeedback = focusFeedback || castSender.lastError;
 
   return (
     <div className={`app-shell ${focusMode ? "is-focus-mode" : ""}`}>
-      {focusFeedback && !focusMode && <div className="app-feedback" role="status">{focusFeedback}</div>}
+      {appFeedback && !focusMode && <div className="app-feedback" role="status">{appFeedback}</div>}
 
       <div className="app-frame">
         <header className="app-header">
@@ -349,6 +271,13 @@ export default function Index() {
             </div>
           </div>
           <div className="header-actions">
+            <CastButton
+              statusLabel={castSender.statusLabel}
+              isConfigured={castSender.isConfigured}
+              sdkStatus={castSender.sdkStatus}
+              isConnected={castSender.isConnected}
+              lastError={castSender.lastError}
+            />
             <button type="button" className="secondary-action" onClick={() => setShowSafety(true)}>
               <Icon name="shield" /> Seguridad
             </button>
@@ -392,20 +321,44 @@ export default function Index() {
               duration={duration}
               sets={sets}
               rest={rest}
-              onFrequencyChange={handleFrequencyChange}
-              onAmplitudeChange={setAmplitude}
-              onTargetSizeChange={setTargetSize}
-              onDensityChange={setDensity}
-              onStripeSizeChange={setStripeSize}
-              onDurationChange={setDuration}
-              onSetsChange={setSets}
-              onRestChange={setRest}
+              onFrequencyChange={(value) => {
+                actions.setFrequencyHz(value);
+                handleParameterChange("frequencyHz", value);
+              }}
+              onAmplitudeChange={(value) => {
+                actions.setAmplitude(value);
+                handleParameterChange("amplitude", value);
+              }}
+              onTargetSizeChange={(value) => {
+                actions.setTargetSize(value);
+                handleParameterChange("targetSize", value);
+              }}
+              onDensityChange={(value) => {
+                actions.setDensity(value);
+                handleParameterChange("density", value);
+              }}
+              onStripeSizeChange={(value) => {
+                actions.setStripeSize(value);
+                handleParameterChange("stripeSize", value);
+              }}
+              onDurationChange={(value) => {
+                actions.setDuration(value);
+                handleParameterChange("duration", value);
+              }}
+              onSetsChange={(value) => {
+                actions.setSets(value);
+                handleParameterChange("sets", value);
+              }}
+              onRestChange={(value) => {
+                actions.setRest(value);
+                handleParameterChange("rest", value);
+              }}
               durationLocked={sessionLocked}
               setsLocked={sessionLocked}
               restLocked={sessionState === "resting"}
             />
-            <BackgroundPanel background={background} onChange={setBackground} />
-            <ObjectivePanel objective={objective} onChange={setObjective} />
+            <BackgroundPanel background={background} onChange={handleBackgroundChange} />
+            <ObjectivePanel objective={objective} onChange={handleObjectiveChange} />
           </aside>
 
           <section className="visual-stack">
@@ -424,7 +377,13 @@ export default function Index() {
                 metronomeEnabled={metronomeEnabled}
                 beat={beat}
                 onToggleSound={handleToggleSound}
-                onToggleMetronome={() => setMetronomeEnabled((value) => !value)}
+                onToggleMetronome={() => {
+                  actions.setMetronomeEnabled((value) => !value);
+                  void castSender.sendCommand("SET_PARAMETER", {
+                    metronomeEnabled: !metronomeEnabled,
+                    updatedAt: Date.now(),
+                  });
+                }}
               />
             </div>
           </section>
