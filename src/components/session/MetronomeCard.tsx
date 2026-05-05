@@ -1,3 +1,4 @@
+import { getBeatIntervalMs } from "../../utils/timing";
 import { Icon, ToggleButton } from "../ui";
 
 interface MetronomeCardProps {
@@ -20,6 +21,7 @@ export function MetronomeCard({
   onToggleMetronome,
 }: MetronomeCardProps) {
   const bpm = Math.round(frequencyHz * 60);
+  const intervalMs = Math.round(getBeatIntervalMs(frequencyHz));
 
   return (
     <div className="metronome-card">
@@ -27,7 +29,9 @@ export function MetronomeCard({
         <div>
           <span className="eyebrow">Metrónomo</span>
           <strong>{frequencyHz.toFixed(1)} Hz</strong>
-          <p>{bpm} BPM</p>
+          <p>
+            {bpm} BPM · {intervalMs} ms/click
+          </p>
         </div>
         <button type="button" className={`sound-button ${soundEnabled ? "enabled" : ""}`} onClick={onToggleSound}>
           <Icon name="sound" /> Sonido {soundEnabled ? "ON" : "OFF"}
@@ -44,7 +48,7 @@ export function MetronomeCard({
         <ToggleButton active={metronomeEnabled} onClick={onToggleMetronome}>
           {metronomeEnabled ? "Metrónomo ON" : "Metrónomo OFF"}
         </ToggleButton>
-        <p>1 Hz = 1 click por segundo. Se pausa durante el descanso.</p>
+        <p>Intervalo = 1 / Hz. El movimiento lineal cambia de extremo en cada click.</p>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ import { SessionControls } from "../components/session/SessionControls";
 import { Icon, InfoCard } from "../components/ui";
 import { protocols } from "../config/protocols";
 import { APP_ICON_SRC, APP_NAME, APP_SUBTITLE } from "../constants/modules";
-import { playMetronomeClick, useMetronome } from "../hooks/useMetronome";
+import { playMetronomeClick, unlockMetronomeAudio, useMetronome } from "../hooks/useMetronome";
 import type { BackgroundConfig, ObjectiveConfig, Protocol, SessionState } from "../types";
 import { clamp, formatTime } from "../utils";
 
@@ -65,7 +65,7 @@ export default function Index() {
 
   const visualRunning = running && sessionState === "playing";
   const metronomeActive = visualRunning && metronomeEnabled;
-  const beat = useMetronome(metronomeActive, frequencyHz, soundEnabled);
+  const beat = useMetronome(metronomeActive, frequencyHz, soundEnabled, resetKey);
   const sessionLocked = sessionState === "playing" || sessionState === "resting";
 
   const showFocusFeedback = useCallback((message: string) => {
@@ -230,6 +230,10 @@ export default function Index() {
       return;
     }
 
+    if (!running && sessionState === "playing") {
+      setResetKey((value) => value + 1);
+    }
+
     setRunning((value) => !value);
   };
 
@@ -270,10 +274,20 @@ export default function Index() {
   const skipLabel = sessionState === "resting" ? "Saltar descanso" : sessionState === "playing" ? "Saltar serie" : "Saltar";
   const skipDisabled = sessionState === "idle" || sessionState === "done";
 
+  const handleFrequencyChange = (value: number) => {
+    setFrequencyHz(value);
+
+    if (visualRunning) {
+      setResetKey((current) => current + 1);
+    }
+  };
+
   const handleToggleSound = () => {
     const next = !soundEnabled;
 
-    if (next) playMetronomeClick();
+    if (next) {
+      void unlockMetronomeAudio().then(() => playMetronomeClick());
+    }
 
     setSoundEnabled(next);
   };
@@ -363,7 +377,7 @@ export default function Index() {
               duration={duration}
               sets={sets}
               rest={rest}
-              onFrequencyChange={setFrequencyHz}
+              onFrequencyChange={handleFrequencyChange}
               onAmplitudeChange={setAmplitude}
               onTargetSizeChange={setTargetSize}
               onDensityChange={setDensity}

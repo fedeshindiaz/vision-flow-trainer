@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getBeatIntervalMs, METRONOME_LOOKAHEAD_MS, METRONOME_SCHEDULE_AHEAD_MS } from "../utils/timing";
 
 type WebAudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
 
@@ -19,30 +20,52 @@ function getCtx(): AudioContext | null {
   return sharedCtx;
 }
 
+function scheduleMetronomeClick(ctx: AudioContext, time: number) {
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const startTime = Math.max(ctx.currentTime, time);
+
+  oscillator.frequency.setValueAtTime(880, startTime);
+  oscillator.type = "sine";
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.055);
+  oscillator.connect(gain).connect(ctx.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + 0.07);
+  oscillator.onended = () => {
+    oscillator.disconnect();
+    gain.disconnect();
+  };
+}
+
+function resumeContext(ctx: AudioContext) {
+  if (ctx.state !== "suspended") return;
+  void ctx.resume().catch(() => undefined);
+}
+
+export async function unlockMetronomeAudio() {
+  const ctx = getCtx();
+
+  if (!ctx) return null;
+
+  try {
+    if (ctx.state === "suspended") await ctx.resume();
+  } catch {
+    return null;
+  }
+
+  return ctx;
+}
+
 export function playMetronomeClick() {
   const ctx = getCtx();
 
   if (!ctx) return null;
 
   try {
-    if (ctx.state === "suspended") void ctx.resume();
-
-    const t = ctx.currentTime;
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    oscillator.frequency.value = 880;
-    oscillator.type = "sine";
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.18, t + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-    oscillator.connect(gain).connect(ctx.destination);
-    oscillator.start(t);
-    oscillator.stop(t + 0.08);
-    oscillator.onended = () => {
-      oscillator.disconnect();
-      gain.disconnect();
-    };
+    resumeContext(ctx);
+    scheduleMetronomeClick(ctx, ctx.currentTime + 0.01);
   } catch {
     // Browsers may block audio until an explicit user gesture.
   }
@@ -50,7 +73,7 @@ export function playMetronomeClick() {
   return ctx;
 }
 
-export function useMetronome(active: boolean, frequencyHz: number, soundEnabled: boolean) {
+export function useMetronome(active: boolean, frequencyHz: number, soundEnabled: boolean, syncKey = 0) {
   const [beat, setBeat] = useState(0);
   const freqRef = useRef(frequencyHz);
   const soundRef = useRef(soundEnabled);
@@ -62,34 +85,55 @@ export function useMetronome(active: boolean, frequencyHz: number, soundEnabled:
     if (!active) return undefined;
 
     let cancelled = false;
-    let timerId: number | undefined;
-    let nextTime = performance.now();
+    let nextBeatAtMs = performance.now();
 
-    const tick = () => {
-      if (cancelled) return;
+    const scheduleBeat = (beatAtMs: number) => {
+      const delayMs = Math.max(0, beatAtMs - performance.now());
 
-      if (soundRef.current) playMetronomeClick();
-      setBeat((value) => value + 1);
+      window.setTimeout(() => {
+        if (!cancelled) setBeat((value) => value + 1);
+      }, delayMs);
 
-      const frequency = Math.max(0.1, freqRef.current);
-      const interval = 1000 / frequency;
-      nextTime += interval;
+      if (!soundRef.current) return;
 
-      const now = performance.now();
-      if (now - nextTime > interval * 2) {
-        nextTime = now + interval;
+      const ctx = getCtx();
+
+      if (!ctx) return;
+
+      try {
+        resumeContext(ctx);
+        const audioDelaySeconds = Math.max(0, (beatAtMs - performance.now()) / 1000);
+        scheduleMetronomeClick(ctx, ctx.currentTime + audioDelaySeconds);
+      } catch {
+        // Keep the visual beat running even when the browser blocks audio.
       }
-
-      timerId = window.setTimeout(tick, Math.max(0, nextTime - performance.now()));
     };
 
-    tick();
+    const scheduler = () => {
+      if (cancelled) return;
+
+      const nowMs = performance.now();
+      let intervalMs = getBeatIntervalMs(freqRef.current);
+
+      if (nowMs - nextBeatAtMs > intervalMs * 2) {
+        nextBeatAtMs = nowMs;
+      }
+
+      while (nextBeatAtMs <= nowMs + METRONOME_SCHEDULE_AHEAD_MS) {
+        scheduleBeat(nextBeatAtMs);
+        intervalMs = getBeatIntervalMs(freqRef.current);
+        nextBeatAtMs += intervalMs;
+      }
+    };
+
+    scheduler();
+    const schedulerId = window.setInterval(scheduler, METRONOME_LOOKAHEAD_MS);
 
     return () => {
       cancelled = true;
-      if (timerId !== undefined) window.clearTimeout(timerId);
+      window.clearInterval(schedulerId);
     };
-  }, [active]);
+  }, [active, syncKey]);
 
   return beat;
 }

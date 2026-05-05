@@ -1,4 +1,5 @@
 import type { Direction, ObjectiveConfig } from "../../types";
+import { getBeatSyncedLinearFactor } from "../../utils/timing";
 
 function drawTarget(
   ctx: CanvasRenderingContext2D,
@@ -117,7 +118,6 @@ export function drawObjective(
   const ax = Math.max(0, Math.min((width * amplitude) / 230, width / 2 - radius));
   const ay = Math.max(0, Math.min((height * amplitude) / 260, height / 2 - radius));
   const phaseAngle = Math.PI * 2 * frequencyHz * elapsed;
-  const phase = Math.sin(phaseAngle);
   let x = cx;
   let y = cy;
   let fill = "#ef4444";
@@ -132,13 +132,12 @@ export function drawObjective(
     if (config.direction === "lissajous") {
       x = cx + Math.sin(phaseAngle) * ax;
       y = cy + Math.sin(phaseAngle * 2) * ay * 0.72;
-    } else if (["up", "down", "vertical"].includes(config.direction)) {
-      y = cy + phase * ay;
-    } else if (["top-left", "top-right", "bottom-left", "bottom-right"].includes(config.direction)) {
-      x = cx + phase * ax * (config.direction.includes("left") ? -1 : 1);
-      y = cy + phase * ay * (config.direction.includes("top") ? -1 : 1);
     } else {
-      x = cx + phase * ax;
+      const axis = axisForLinearDirection(config.direction);
+      const beatSyncedFactor = getBeatSyncedLinearFactor(elapsed, frequencyHz);
+
+      x = cx + beatSyncedFactor * ax * axis.x;
+      y = cy + beatSyncedFactor * ay * axis.y;
     }
   }
 
@@ -165,6 +164,23 @@ export function drawObjective(
   }
 
   drawTarget(ctx, x, y, safeSize, fill, label);
+}
+
+function axisForLinearDirection(direction: Direction) {
+  const axes: Partial<Record<Direction, { x: number; y: number }>> = {
+    right: { x: 1, y: 0 },
+    left: { x: -1, y: 0 },
+    horizontal: { x: 1, y: 0 },
+    down: { x: 0, y: 1 },
+    up: { x: 0, y: -1 },
+    vertical: { x: 0, y: 1 },
+    "top-left": { x: -1, y: -1 },
+    "top-right": { x: 1, y: -1 },
+    "bottom-left": { x: -1, y: 1 },
+    "bottom-right": { x: 1, y: 1 },
+  };
+
+  return axes[direction] ?? { x: 1, y: 0 };
 }
 
 const randomCache = new Map<number, { x: number; y: number }>();
