@@ -26,7 +26,8 @@ export default function Index() {
   const [frequencyHz, setFrequencyHz] = useState(initialProtocol.frequencyHz);
   const [amplitude, setAmplitude] = useState(42);
   const [targetSize, setTargetSize] = useState(38);
-  const [density, setDensity] = useState(48);
+  const [density, setDensity] = useState(96);
+  const [stripeSize, setStripeSize] = useState(48);
   const [duration, setDuration] = useState(45);
   const [sets, setSets] = useState(3);
   const [rest, setRest] = useState(30);
@@ -304,6 +305,7 @@ export default function Index() {
           amplitude={amplitude}
           targetSize={targetSize}
           density={density}
+          stripeSize={stripeSize}
         />
 
         <div className="viewport-label top">
@@ -374,6 +376,7 @@ export default function Index() {
               amplitude={amplitude}
               targetSize={targetSize}
               density={density}
+              stripeSize={stripeSize}
               duration={duration}
               sets={sets}
               rest={rest}
@@ -381,6 +384,7 @@ export default function Index() {
               onAmplitudeChange={setAmplitude}
               onTargetSizeChange={setTargetSize}
               onDensityChange={setDensity}
+              onStripeSizeChange={setStripeSize}
               onDurationChange={setDuration}
               onSetsChange={setSets}
               onRestChange={setRest}

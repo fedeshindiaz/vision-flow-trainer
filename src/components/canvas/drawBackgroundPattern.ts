@@ -34,6 +34,7 @@ function drawStripeSet(
   width: number,
   height: number,
   period: number,
+  stripeSize: number,
   offsetX: number,
   offsetY: number,
   angle: number,
@@ -48,12 +49,17 @@ function drawStripeSet(
   const projectedOffset = offsetX * Math.cos(angle) + offsetY * Math.sin(angle);
   const normalizedOffset = ((projectedOffset % period) + period) % period;
   const start = -width - height + normalizedOffset;
+  const stripeWidth = getStripeWidth(period, stripeSize);
 
   for (let x = start; x < width * 2 + height; x += period) {
-    ctx.fillRect(x, -height, Math.max(5, period * 0.16), height * 3);
+    ctx.fillRect(x, -height, stripeWidth, height * 3);
   }
 
   ctx.restore();
+}
+
+export function getStripeWidth(period: number, stripeSize: number) {
+  return clamp(stripeSize, 4, Math.max(4, period * 0.92));
 }
 
 export function drawBackgroundPattern(
@@ -62,10 +68,11 @@ export function drawBackgroundPattern(
   height: number,
   config: BackgroundConfig,
   density: number,
+  stripeSize: number,
   elapsed: number,
   frequencyHz: number,
 ) {
-  const period = clamp(density, 24, 96);
+  const period = clamp(density, 24, 180);
   const vector = vectorFor(config.direction);
   const speedPx = period * Math.max(0.05, frequencyHz);
   let offsetX = vector.x * speedPx * elapsed;
@@ -133,8 +140,8 @@ export function drawBackgroundPattern(
   }
 
   if (config.type === "intersectingStripes") {
-    drawStripeSet(ctx, width, height, period, offsetX, offsetY, Math.PI / 4, dark);
-    drawStripeSet(ctx, width, height, period, -offsetX, offsetY, -Math.PI / 4, "rgba(15,23,42,0.42)");
+    drawStripeSet(ctx, width, height, period, stripeSize, offsetX, offsetY, Math.PI / 4, dark);
+    drawStripeSet(ctx, width, height, period, stripeSize, -offsetX, offsetY, -Math.PI / 4, "rgba(15,23,42,0.42)");
     return;
   }
 
@@ -151,6 +158,7 @@ export function drawBackgroundPattern(
       width,
       height,
       period,
+      stripeSize,
       offsetX,
       offsetY,
       ["up", "down"].includes(config.direction) ? Math.PI / 2 : 0,
@@ -160,5 +168,5 @@ export function drawBackgroundPattern(
     return;
   }
 
-  drawStripeSet(ctx, width, height, period, offsetX, offsetY, getStripeAngle(config.direction), dark);
+  drawStripeSet(ctx, width, height, period, stripeSize, offsetX, offsetY, getStripeAngle(config.direction), dark);
 }

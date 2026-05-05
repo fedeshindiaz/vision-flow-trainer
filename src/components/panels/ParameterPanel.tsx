@@ -6,6 +6,7 @@ interface ParameterPanelProps {
   amplitude: number;
   targetSize: number;
   density: number;
+  stripeSize: number;
   duration: number;
   sets: number;
   rest: number;
@@ -13,6 +14,7 @@ interface ParameterPanelProps {
   onAmplitudeChange: (value: number) => void;
   onTargetSizeChange: (value: number) => void;
   onDensityChange: (value: number) => void;
+  onStripeSizeChange: (value: number) => void;
   onDurationChange: (value: number) => void;
   onSetsChange: (value: number) => void;
   onRestChange: (value: number) => void;
@@ -27,6 +29,7 @@ export function ParameterPanel({
   amplitude,
   targetSize,
   density,
+  stripeSize,
   duration,
   sets,
   rest,
@@ -34,6 +37,7 @@ export function ParameterPanel({
   onAmplitudeChange,
   onTargetSizeChange,
   onDensityChange,
+  onStripeSizeChange,
   onDurationChange,
   onSetsChange,
   onRestChange,
@@ -85,7 +89,8 @@ export function ParameterPanel({
           <SliderControl label="Amplitud" value={amplitude} min={10} max={80} step={5} unit=" %" onChange={onAmplitudeChange} />
           <SliderControl label="Duración" value={duration} min={10} max={180} step={5} unit=" s" disabled={durationLocked} onChange={onDurationChange} />
           <SliderControl label="Tamaño objetivo" value={targetSize} min={10} max={90} step={5} unit=" px" onChange={onTargetSizeChange} />
-          <SliderControl label="Densidad fondo" value={density} min={24} max={96} step={4} unit=" px" onChange={onDensityChange} />
+          <SliderControl label="Separación fondo" value={density} min={32} max={180} step={4} unit=" px" onChange={onDensityChange} />
+          <SliderControl label="Tamaño franjas" value={stripeSize} min={4} max={120} step={4} unit=" px" onChange={onStripeSizeChange} />
         </div>
       )}
     </section>

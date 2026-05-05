@@ -13,6 +13,7 @@ interface VisualCanvasProps {
   amplitude: number;
   targetSize: number;
   density: number;
+  stripeSize: number;
 }
 
 export function VisualCanvas({
@@ -24,12 +25,13 @@ export function VisualCanvas({
   amplitude,
   targetSize,
   density,
+  stripeSize,
 }: VisualCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useCanvasRenderer(canvasRef, hostRef, running, resetKey, (ctx, width, height, elapsed) => {
-    drawBackgroundPattern(ctx, width, height, background, density, elapsed, frequencyHz);
+    drawBackgroundPattern(ctx, width, height, background, density, stripeSize, elapsed, frequencyHz);
     drawObjective(ctx, width, height, objective, elapsed, frequencyHz, amplitude, targetSize);
   });
 
