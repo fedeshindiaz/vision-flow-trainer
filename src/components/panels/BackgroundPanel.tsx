@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { backgroundTypes, directionTypes } from "../../constants/modules";
 import type { BackgroundConfig, BackgroundType } from "../../types";
 import { Icon, ToggleButton } from "../ui";
@@ -10,7 +10,9 @@ export function BackgroundPanel({
   background: BackgroundConfig;
   onChange: (background: BackgroundConfig) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const lastBackgroundTypeRef = useRef<BackgroundType>("stripes");
+  const summary = background.enabled ? `${background.type} · ${background.direction}` : "Fondo liso";
 
   useEffect(() => {
     if (background.enabled && background.type !== "none") {
@@ -19,55 +21,81 @@ export function BackgroundPanel({
   }, [background.enabled, background.type]);
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <h2>
-          <Icon name="bg" /> Fondo
-        </h2>
-        <ToggleButton
-          active={background.enabled}
-          onClick={() =>
-            onChange({
-              ...background,
-              enabled: !background.enabled,
-              type: !background.enabled && background.type === "none" ? lastBackgroundTypeRef.current : background.type,
-            })
-          }
+    <section className="panel collapsible-panel">
+      <div className="panel-header compact-panel-header">
+        <button
+          type="button"
+          className="panel-title-button"
+          aria-expanded={expanded}
+          aria-controls="background-panel-body"
+          onClick={() => setExpanded((value) => !value)}
         >
-          {background.enabled ? "ON" : "OFF"}
-        </ToggleButton>
-      </div>
+          <span className="panel-title-main">
+            <Icon name="bg" /> Fondo
+          </span>
+          <span className="panel-summary">{summary}</span>
+        </button>
 
-      <div className="chip-grid three">
-        {backgroundTypes.map((item) => (
+        <div className="panel-actions">
           <ToggleButton
-            key={item.key}
-            active={background.type === item.key}
-            onClick={() => onChange({ ...background, enabled: item.key !== "none", type: item.key })}
-          >
-            {item.label}
-          </ToggleButton>
-        ))}
-      </div>
-
-      <div className="chip-grid five">
-        {directionTypes.map((direction) => (
-          <ToggleButton
-            key={direction.key}
-            active={background.direction === direction.key}
+            active={background.enabled}
             onClick={() =>
               onChange({
                 ...background,
-                enabled: true,
-                type: background.type === "none" ? "stripes" : background.type,
-                direction: direction.key,
+                enabled: !background.enabled,
+                type: !background.enabled && background.type === "none" ? lastBackgroundTypeRef.current : background.type,
               })
             }
           >
-            {direction.label}
+            {background.enabled ? "ON" : "OFF"}
           </ToggleButton>
-        ))}
+          <button
+            type="button"
+            className="collapse-button"
+            aria-label={expanded ? "Ocultar fondo" : "Mostrar fondo"}
+            aria-expanded={expanded}
+            aria-controls="background-panel-body"
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {expanded ? "-" : "+"}
+          </button>
+        </div>
       </div>
+
+      {expanded && (
+        <div className="panel-body" id="background-panel-body">
+          <div className="chip-grid three">
+            {backgroundTypes.map((item) => (
+              <ToggleButton
+                key={item.key}
+                active={background.type === item.key}
+                onClick={() => onChange({ ...background, enabled: item.key !== "none", type: item.key })}
+              >
+                {item.label}
+              </ToggleButton>
+            ))}
+          </div>
+
+          <div className="chip-grid five">
+            {directionTypes.map((direction) => (
+              <ToggleButton
+                key={direction.key}
+                active={background.direction === direction.key}
+                onClick={() =>
+                  onChange({
+                    ...background,
+                    enabled: true,
+                    type: background.type === "none" ? "stripes" : background.type,
+                    direction: direction.key,
+                  })
+                }
+              >
+                {direction.label}
+              </ToggleButton>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

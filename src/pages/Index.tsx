@@ -355,8 +355,6 @@ export default function Index() {
               onApplyProtocol={applyProtocol}
             />
 
-            <BackgroundPanel background={background} onChange={setBackground} />
-            <ObjectivePanel objective={objective} onChange={setObjective} />
             <ParameterPanel
               frequencyHz={frequencyHz}
               amplitude={amplitude}
@@ -386,6 +384,8 @@ export default function Index() {
                 onReset={resetSession}
               />
             </ParameterPanel>
+            <BackgroundPanel background={background} onChange={setBackground} />
+            <ObjectivePanel objective={objective} onChange={setObjective} />
           </aside>
 
           <section className="visual-stack">

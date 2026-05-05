@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { directionTypes, objectiveModes } from "../../constants/modules";
 import type { Direction, ObjectiveConfig, ObjectiveMode } from "../../types";
 import { Icon, ToggleButton } from "../ui";
@@ -16,7 +16,9 @@ export function ObjectivePanel({
   objective: ObjectiveConfig;
   onChange: (objective: ObjectiveConfig) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const lastObjectiveModeRef = useRef<ObjectiveMode>("fixed");
+  const summary = objective.enabled ? `${objective.mode} · ${objective.direction}` : "Sin objetivo";
 
   useEffect(() => {
     if (objective.enabled && objective.mode !== "none") {
@@ -25,58 +27,84 @@ export function ObjectivePanel({
   }, [objective.enabled, objective.mode]);
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <h2>
-          <Icon name="target" /> Objetivo
-        </h2>
-        <ToggleButton
-          active={objective.enabled}
-          onClick={() =>
-            onChange({
-              ...objective,
-              enabled: !objective.enabled,
-              mode: !objective.enabled && objective.mode === "none" ? lastObjectiveModeRef.current : objective.mode,
-            })
-          }
+    <section className="panel collapsible-panel">
+      <div className="panel-header compact-panel-header">
+        <button
+          type="button"
+          className="panel-title-button"
+          aria-expanded={expanded}
+          aria-controls="objective-panel-body"
+          onClick={() => setExpanded((value) => !value)}
         >
-          {objective.enabled ? "ON" : "OFF"}
-        </ToggleButton>
-      </div>
+          <span className="panel-title-main">
+            <Icon name="target" /> Objetivo
+          </span>
+          <span className="panel-summary">{summary}</span>
+        </button>
 
-      <div className="chip-grid three">
-        {objectiveModes.map((mode) => (
+        <div className="panel-actions">
           <ToggleButton
-            key={mode.key}
-            active={objective.mode === mode.key}
-            onClick={() => onChange({ ...objective, enabled: mode.key !== "none", mode: mode.key })}
-          >
-            {mode.label}
-          </ToggleButton>
-        ))}
-      </div>
-
-      <div className="chip-grid five">
-        {objectiveDirections.map((direction) => (
-          <ToggleButton
-            key={direction.key}
-            active={objective.direction === direction.key}
+            active={objective.enabled}
             onClick={() =>
               onChange({
                 ...objective,
-                enabled: true,
-                mode: objective.mode === "none" ? "fixed" : objective.mode,
-                direction: direction.key,
+                enabled: !objective.enabled,
+                mode: !objective.enabled && objective.mode === "none" ? lastObjectiveModeRef.current : objective.mode,
               })
             }
           >
-            {direction.label}
+            {objective.enabled ? "ON" : "OFF"}
           </ToggleButton>
-        ))}
+          <button
+            type="button"
+            className="collapse-button"
+            aria-label={expanded ? "Ocultar objetivo" : "Mostrar objetivo"}
+            aria-expanded={expanded}
+            aria-controls="objective-panel-body"
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {expanded ? "-" : "+"}
+          </button>
+        </div>
       </div>
 
-      {objective.enabled && objective.mode === "fixed" && (
-        <p className="panel-note">En objetivo fijo la dirección solo describe el protocolo; el punto queda centrado.</p>
+      {expanded && (
+        <div className="panel-body" id="objective-panel-body">
+          <div className="chip-grid three">
+            {objectiveModes.map((mode) => (
+              <ToggleButton
+                key={mode.key}
+                active={objective.mode === mode.key}
+                onClick={() => onChange({ ...objective, enabled: mode.key !== "none", mode: mode.key })}
+              >
+                {mode.label}
+              </ToggleButton>
+            ))}
+          </div>
+
+          <div className="chip-grid five">
+            {objectiveDirections.map((direction) => (
+              <ToggleButton
+                key={direction.key}
+                active={objective.direction === direction.key}
+                onClick={() =>
+                  onChange({
+                    ...objective,
+                    enabled: true,
+                    mode: objective.mode === "none" ? "fixed" : objective.mode,
+                    direction: direction.key,
+                  })
+                }
+              >
+                {direction.label}
+              </ToggleButton>
+            ))}
+          </div>
+
+          {objective.enabled && objective.mode === "fixed" && (
+            <p className="panel-note">En objetivo fijo la dirección solo describe el protocolo; el punto queda centrado.</p>
+          )}
+        </div>
       )}
     </section>
   );
