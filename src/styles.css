@@ -593,8 +593,15 @@ input[type="range"] {
 
 .status-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr minmax(300px, 1.35fr);
-  gap: 14px;
+  grid-template-columns: minmax(145px, 0.8fr) minmax(145px, 0.8fr) minmax(300px, 1.2fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.status-grid .info-card,
+.status-grid .metronome-card {
+  border-radius: 16px;
+  padding: 12px;
 }
 
 .info-card strong,
@@ -605,19 +612,45 @@ input[type="range"] {
   line-height: 1;
 }
 
+.status-grid .info-card strong,
+.status-grid .metronome-card strong {
+  margin-top: 6px;
+  font-size: 24px;
+}
+
+.status-grid .info-card p,
+.status-grid .metronome-card p {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
 .metronome-card {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
+.status-grid .metronome-card {
+  gap: 10px;
+}
+
 .metronome-main {
   justify-content: space-between;
+}
+
+.status-grid .metronome-main {
+  gap: 10px;
+}
+
+.status-grid .metronome-main > div {
+  min-width: 0;
 }
 
 .sound-button {
   background: #f1f5f9;
   color: #475569;
+  white-space: nowrap;
 }
 
 .sound-button.enabled {
@@ -631,6 +664,10 @@ input[type="range"] {
   gap: 8px;
 }
 
+.status-grid .beat-row {
+  gap: 6px;
+}
+
 .beat {
   height: 12px;
   flex: 1;
@@ -638,13 +675,32 @@ input[type="range"] {
   background: #e2e8f0;
 }
 
+.status-grid .beat {
+  height: 8px;
+}
+
 .beat.active {
   background: #ef4444;
 }
 
 .metronome-toggle p {
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: 13px;
+}
+
+.status-grid .metronome-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-grid .metronome-toggle .chip {
+  flex-shrink: 0;
+}
+
+.status-grid .metronome-toggle p {
+  margin-top: 0;
+  line-height: 1.25;
 }
 
 .panel-note {
@@ -708,9 +764,12 @@ input[type="range"] {
 }
 
 @media (max-width: 1100px) {
-  .main-grid,
-  .status-grid {
+  .main-grid {
     grid-template-columns: 1fr;
+  }
+
+  .status-grid {
+    grid-template-columns: minmax(130px, 0.75fr) minmax(130px, 0.75fr) minmax(260px, 1.15fr);
   }
 
   .viewport {
@@ -732,6 +791,15 @@ input[type="range"] {
 
   .header-actions {
     width: 100%;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-grid .metronome-toggle {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .chip-grid.three,
