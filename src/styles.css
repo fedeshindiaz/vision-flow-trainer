@@ -236,7 +236,21 @@ button:disabled {
   margin-top: 0;
 }
 
+.panel-body .search-input,
+.panel-body .protocol-list {
+  margin-top: 0;
+}
+
 .panel-header > span {
+  border-radius: 999px;
+  background: #f1f5f9;
+  padding: 4px 9px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.panel-count {
   border-radius: 999px;
   background: #f1f5f9;
   padding: 4px 9px;
