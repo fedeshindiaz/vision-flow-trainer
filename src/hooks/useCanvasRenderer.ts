@@ -9,6 +9,8 @@ export function useCanvasRenderer(
   resetKey: number,
   draw: DrawFn,
   syncElapsedSeconds = 0,
+  syncStartMs: number | null = null,
+  syncBaseElapsedSeconds = 0,
 ) {
   const elapsedRef = useRef(0);
   const lastRef = useRef(performance.now());
@@ -18,7 +20,7 @@ export function useCanvasRenderer(
   drawRef.current = draw;
 
   useEffect(() => {
-    elapsedRef.current = syncElapsedSeconds;
+    elapsedRef.current = syncStartMs === null ? syncElapsedSeconds : syncBaseElapsedSeconds;
     lastRef.current = performance.now();
     const canvas = canvasRef.current;
     const { width, height } = sizeRef.current;
@@ -29,17 +31,17 @@ export function useCanvasRenderer(
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawRef.current(ctx, width, height, elapsedRef.current);
     }
-  }, [canvasRef, resetKey, syncElapsedSeconds]);
+  }, [canvasRef, resetKey, syncBaseElapsedSeconds, syncElapsedSeconds, syncStartMs]);
 
   useEffect(() => {
-    if (!syncElapsedSeconds) return;
+    if (!syncElapsedSeconds || syncStartMs !== null) return;
 
     const drift = Math.abs(elapsedRef.current - syncElapsedSeconds);
 
     if (drift > 0.25) {
       elapsedRef.current = syncElapsedSeconds;
     }
-  }, [syncElapsedSeconds]);
+  }, [syncElapsedSeconds, syncStartMs]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -118,7 +120,11 @@ export function useCanvasRenderer(
         const delta = Math.min(0.05, (now - lastRef.current) / 1000);
         lastRef.current = now;
 
-        elapsedRef.current += delta;
+        if (syncStartMs === null) {
+          elapsedRef.current += delta;
+        } else {
+          elapsedRef.current = syncBaseElapsedSeconds + Math.max(0, (now - syncStartMs) / 1000);
+        }
 
         drawRef.current(ctx, width, height, elapsedRef.current);
       }
@@ -129,5 +135,5 @@ export function useCanvasRenderer(
     raf = requestAnimationFrame(loop);
 
     return () => cancelAnimationFrame(raf);
-  }, [canvasRef, running]);
+  }, [canvasRef, running, syncBaseElapsedSeconds, syncStartMs]);
 }

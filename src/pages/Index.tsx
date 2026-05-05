@@ -50,6 +50,8 @@ export default function Index() {
     currentSet,
     resetKey,
     metronomeEnabled,
+    tempoStartedAtMs,
+    tempoAccumulatedElapsedMs,
     visualRunning,
     metronomeActive,
     sessionLocked,
@@ -76,7 +78,14 @@ export default function Index() {
     });
   }, [protocolCategory, query]);
 
-  const beat = useMetronome(metronomeActive, frequencyHz, soundEnabled, resetKey);
+  const beat = useMetronome(
+    metronomeActive,
+    frequencyHz,
+    soundEnabled,
+    resetKey,
+    tempoStartedAtMs,
+    tempoAccumulatedElapsedMs,
+  );
 
   const showFocusFeedback = useCallback((message: string) => {
     setFocusFeedback(message);
@@ -227,6 +236,8 @@ export default function Index() {
           targetSize={targetSize}
           density={density}
           stripeSize={stripeSize}
+          syncStartMs={tempoStartedAtMs}
+          syncBaseElapsedMs={tempoAccumulatedElapsedMs}
         />
 
         <div className="viewport-label top">

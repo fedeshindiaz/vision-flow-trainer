@@ -15,6 +15,8 @@ interface VisualCanvasProps {
   density: number;
   stripeSize: number;
   syncElapsedMs?: number;
+  syncStartMs?: number | null;
+  syncBaseElapsedMs?: number;
 }
 
 export function VisualCanvas({
@@ -28,6 +30,8 @@ export function VisualCanvas({
   density,
   stripeSize,
   syncElapsedMs = 0,
+  syncStartMs = null,
+  syncBaseElapsedMs = 0,
 }: VisualCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -42,6 +46,8 @@ export function VisualCanvas({
       drawObjective(ctx, width, height, objective, elapsed, frequencyHz, amplitude, targetSize);
     },
     syncElapsedMs / 1000,
+    syncStartMs,
+    syncBaseElapsedMs / 1000,
   );
 
   return (

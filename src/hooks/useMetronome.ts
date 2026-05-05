@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { getBeatIntervalMs, METRONOME_LOOKAHEAD_MS, METRONOME_SCHEDULE_AHEAD_MS } from "../utils/timing";
+import {
+  getBeatIntervalMs,
+  getNextBeatAtMs,
+  METRONOME_LOOKAHEAD_MS,
+  METRONOME_SCHEDULE_AHEAD_MS,
+} from "../utils/timing";
 
 type WebAudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
 
@@ -73,7 +78,14 @@ export function playMetronomeClick() {
   return ctx;
 }
 
-export function useMetronome(active: boolean, frequencyHz: number, soundEnabled: boolean, syncKey = 0) {
+export function useMetronome(
+  active: boolean,
+  frequencyHz: number,
+  soundEnabled: boolean,
+  syncKey = 0,
+  syncStartMs: number | null = null,
+  syncBaseElapsedMs = 0,
+) {
   const [beat, setBeat] = useState(0);
   const freqRef = useRef(frequencyHz);
   const soundRef = useRef(soundEnabled);
@@ -85,7 +97,11 @@ export function useMetronome(active: boolean, frequencyHz: number, soundEnabled:
     if (!active) return undefined;
 
     let cancelled = false;
-    let nextBeatAtMs = performance.now();
+    const getAlignedNextBeatAtMs = () =>
+      getNextBeatAtMs(syncStartMs, syncBaseElapsedMs, performance.now(), freqRef.current);
+    let nextBeatAtMs = getAlignedNextBeatAtMs();
+
+    setBeat(0);
 
     const scheduleBeat = (beatAtMs: number) => {
       const delayMs = Math.max(0, beatAtMs - performance.now());
@@ -116,7 +132,7 @@ export function useMetronome(active: boolean, frequencyHz: number, soundEnabled:
       let intervalMs = getBeatIntervalMs(freqRef.current);
 
       if (nowMs - nextBeatAtMs > intervalMs * 2) {
-        nextBeatAtMs = nowMs;
+        nextBeatAtMs = getAlignedNextBeatAtMs();
       }
 
       while (nextBeatAtMs <= nowMs + METRONOME_SCHEDULE_AHEAD_MS) {
@@ -133,7 +149,7 @@ export function useMetronome(active: boolean, frequencyHz: number, soundEnabled:
       cancelled = true;
       window.clearInterval(schedulerId);
     };
-  }, [active, syncKey]);
+  }, [active, syncBaseElapsedMs, syncKey, syncStartMs]);
 
   return beat;
 }

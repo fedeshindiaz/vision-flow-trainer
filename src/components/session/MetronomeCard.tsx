@@ -48,7 +48,7 @@ export function MetronomeCard({
         <ToggleButton active={metronomeEnabled} onClick={onToggleMetronome}>
           {metronomeEnabled ? "Metrónomo ON" : "Metrónomo OFF"}
         </ToggleButton>
-        <p>1 / Hz; movimiento lineal sincronizado.</p>
+        <p>1 / Hz; sacadas y lineales sincronizados.</p>
       </div>
     </div>
   );

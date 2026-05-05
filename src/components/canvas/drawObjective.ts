@@ -1,5 +1,5 @@
 import type { Direction, ObjectiveConfig } from "../../types";
-import { getBeatSyncedLinearFactor } from "../../utils/timing";
+import { getBeatIndex, getBeatSyncedLinearFactor } from "../../utils/timing";
 
 function drawTarget(
   ctx: CanvasRenderingContext2D,
@@ -149,7 +149,7 @@ export function drawObjective(
   }
 
   if (config.mode === "saccade") {
-    const stepIndex = Math.floor(elapsed * frequencyHz);
+    const stepIndex = getBeatIndex(elapsed, frequencyHz);
 
     if (config.direction === "lissajous") {
       const pos = getRandomSaccadePosition(stepIndex, cx, cy, ax, ay);

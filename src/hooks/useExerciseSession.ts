@@ -27,6 +27,8 @@ export function useExerciseSession() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [pausedAt, setPausedAt] = useState<number | null>(null);
   const [accumulatedElapsedMs, setAccumulatedElapsedMs] = useState(0);
+  const [tempoStartedAtMs, setTempoStartedAtMs] = useState<number | null>(null);
+  const [tempoAccumulatedElapsedMs, setTempoAccumulatedElapsedMs] = useState(0);
 
   const selectedProtocol = protocols.find((protocol) => protocol.id === selectedProtocolId) ?? protocols[0];
   const visualRunning = running && sessionState === "playing";
@@ -37,24 +39,34 @@ export function useExerciseSession() {
     setStartedAt(Date.now());
     setPausedAt(null);
     setAccumulatedElapsedMs(0);
+    setTempoStartedAtMs(performance.now());
+    setTempoAccumulatedElapsedMs(0);
   }, []);
 
   const stopVisualClock = useCallback(() => {
     setStartedAt(null);
     setPausedAt(null);
     setAccumulatedElapsedMs(0);
+    setTempoStartedAtMs(null);
+    setTempoAccumulatedElapsedMs(0);
   }, []);
 
   const pauseVisualClock = useCallback(() => {
     const now = Date.now();
+    const tempoNow = performance.now();
 
     setAccumulatedElapsedMs((value) => (startedAt ? value + Math.max(0, now - startedAt) : value));
+    setTempoAccumulatedElapsedMs((value) =>
+      tempoStartedAtMs === null ? value : value + Math.max(0, tempoNow - tempoStartedAtMs),
+    );
     setStartedAt(null);
+    setTempoStartedAtMs(null);
     setPausedAt(now);
-  }, [startedAt]);
+  }, [startedAt, tempoStartedAtMs]);
 
   const resumeVisualClock = useCallback(() => {
     setStartedAt(Date.now());
+    setTempoStartedAtMs(performance.now());
     setPausedAt(null);
   }, []);
 
@@ -291,6 +303,8 @@ export function useExerciseSession() {
     currentSet,
     resetKey,
     metronomeEnabled,
+    tempoStartedAtMs,
+    tempoAccumulatedElapsedMs,
     visualRunning,
     metronomeActive,
     sessionLocked,
