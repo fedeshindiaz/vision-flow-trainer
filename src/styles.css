@@ -227,10 +227,13 @@ button:disabled {
 }
 
 .protocol-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   border: 1px solid #dbe3ee;
   border-radius: 14px;
   background: #fff;
-  min-height: 44px;
+  min-height: 68px;
   padding: 12px;
   text-align: left;
 }
@@ -243,13 +246,15 @@ button:disabled {
 .protocol-item strong,
 .protocol-item span {
   display: block;
+  line-height: 1.25;
 }
 
 .protocol-item span {
-  margin-top: 4px;
+  margin-top: 6px;
   color: #64748b;
   font-size: 12px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .split-grid,
