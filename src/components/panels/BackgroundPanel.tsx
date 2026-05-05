@@ -1,5 +1,6 @@
+import { useEffect, useRef } from "react";
 import { backgroundTypes, directionTypes } from "../../constants/modules";
-import type { BackgroundConfig } from "../../types";
+import type { BackgroundConfig, BackgroundType } from "../../types";
 import { Icon, ToggleButton } from "../ui";
 
 export function BackgroundPanel({
@@ -9,6 +10,14 @@ export function BackgroundPanel({
   background: BackgroundConfig;
   onChange: (background: BackgroundConfig) => void;
 }) {
+  const lastBackgroundTypeRef = useRef<BackgroundType>("stripes");
+
+  useEffect(() => {
+    if (background.enabled && background.type !== "none") {
+      lastBackgroundTypeRef.current = background.type;
+    }
+  }, [background.enabled, background.type]);
+
   return (
     <section className="panel">
       <div className="panel-header">
@@ -21,7 +30,7 @@ export function BackgroundPanel({
             onChange({
               ...background,
               enabled: !background.enabled,
-              type: !background.enabled && background.type === "none" ? "stripes" : background.type,
+              type: !background.enabled && background.type === "none" ? lastBackgroundTypeRef.current : background.type,
             })
           }
         >

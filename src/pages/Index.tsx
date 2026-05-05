@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../styles.css";
 import { VisualCanvas } from "../components/canvas/VisualCanvas";
 import { BackgroundPanel } from "../components/panels/BackgroundPanel";
@@ -11,7 +11,7 @@ import { SessionControls } from "../components/session/SessionControls";
 import { Icon, InfoCard } from "../components/ui";
 import { protocols } from "../config/protocols";
 import { APP_ICON_SRC, APP_NAME, APP_SUBTITLE } from "../constants/modules";
-import { useMetronome } from "../hooks/useMetronome";
+import { playMetronomeClick, useMetronome } from "../hooks/useMetronome";
 import type { BackgroundConfig, ObjectiveConfig, Protocol, SessionState } from "../types";
 import { clamp, formatTime } from "../utils";
 
@@ -36,9 +36,13 @@ export default function Index() {
   const [currentSet, setCurrentSet] = useState(1);
   const [resetKey, setResetKey] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
+  const [focusFeedback, setFocusFeedback] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [metronomeEnabled, setMetronomeEnabled] = useState(initialProtocol.metronome);
   const [showSafety, setShowSafety] = useState(false);
+  const focusHostRef = useRef<HTMLDivElement | null>(null);
+  const feedbackTimerRef = useRef<number | null>(null);
+  const fullscreenWasActiveRef = useRef(false);
 
   const selectedProtocol = protocols.find((protocol) => protocol.id === selectedProtocolId) ?? protocols[0];
 
@@ -54,7 +58,7 @@ export default function Index() {
     return base.filter((protocol) => {
       const haystack = `${protocol.name} ${protocol.category} ${protocol.module} ${
         protocol.sourceVideo ?? ""
-      } ${protocol.background.type} ${protocol.objective.mode}`.toLowerCase();
+      } ${protocol.background.type} ${protocol.objective.mode} ${protocol.cue} ${protocol.head} ${protocol.eyes} ${protocol.level}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
   }, [protocolCategory, query]);
@@ -62,6 +66,75 @@ export default function Index() {
   const visualRunning = running && sessionState === "playing";
   const metronomeActive = visualRunning && metronomeEnabled;
   const beat = useMetronome(metronomeActive, frequencyHz, soundEnabled);
+  const sessionLocked = sessionState === "playing" || sessionState === "resting";
+
+  const showFocusFeedback = useCallback((message: string) => {
+    setFocusFeedback(message);
+
+    if (feedbackTimerRef.current) {
+      window.clearTimeout(feedbackTimerRef.current);
+    }
+
+    feedbackTimerRef.current = window.setTimeout(() => setFocusFeedback(""), 3500);
+  }, []);
+
+  const exitFocusMode = useCallback(async () => {
+    setFocusMode(false);
+
+    if (!document.fullscreenElement) return;
+
+    try {
+      await document.exitFullscreen();
+    } catch {
+      showFocusFeedback("No se pudo salir de pantalla completa. Usá Esc si el navegador lo requiere.");
+    }
+  }, [showFocusFeedback]);
+
+  const enterFocusMode = useCallback(async () => {
+    setFocusMode(true);
+
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    const target = focusHostRef.current;
+
+    if (!target?.requestFullscreen) {
+      showFocusFeedback("Modo pantalla interno activo. El navegador no ofrece fullscreen real.");
+      return;
+    }
+
+    try {
+      await target.requestFullscreen();
+      fullscreenWasActiveRef.current = true;
+    } catch {
+      showFocusFeedback("Modo pantalla interno activo. El navegador bloqueó fullscreen real.");
+    }
+  }, [showFocusFeedback]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const activeElement = document.fullscreenElement;
+
+      if (activeElement === focusHostRef.current) {
+        fullscreenWasActiveRef.current = true;
+        return;
+      }
+
+      if (!activeElement && fullscreenWasActiveRef.current) {
+        fullscreenWasActiveRef.current = false;
+        setFocusMode(false);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+
+      if (feedbackTimerRef.current) {
+        window.clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
 
   const resetSession = () => {
     setRunning(false);
@@ -86,8 +159,6 @@ export default function Index() {
 
   const handleCategoryChange = (category: string) => {
     setProtocolCategory(category);
-    const first = category === "Todos" ? protocols[0] : protocols.find((protocol) => protocol.category === category);
-    if (first) applyProtocol(first);
   };
 
   useEffect(() => {
@@ -187,55 +258,64 @@ export default function Index() {
   const skipLabel = sessionState === "resting" ? "Saltar descanso" : sessionState === "playing" ? "Saltar serie" : "Saltar";
   const skipDisabled = sessionState === "idle" || sessionState === "done";
 
+  const handleToggleSound = () => {
+    const next = !soundEnabled;
+
+    if (next) playMetronomeClick();
+
+    setSoundEnabled(next);
+  };
+
   const viewport = (
-    <div className="viewport">
-      <VisualCanvas
-        running={visualRunning}
-        resetKey={resetKey}
-        background={background}
-        objective={objective}
-        frequencyHz={frequencyHz}
-        amplitude={amplitude}
-        targetSize={targetSize}
-        density={density}
-      />
+    <div className="viewport-shell" ref={focusHostRef}>
+      {focusMode && (
+        <button type="button" onClick={exitFocusMode} className="focus-exit">
+          <Icon name="close" /> Salir
+        </button>
+      )}
 
-      <div className="viewport-label top">
-        <span>
-          {selectedProtocol.category}
-          {selectedProtocol.sourceVideo ? ` · video ${selectedProtocol.sourceVideo}` : ""}
-        </span>
-        <strong>{selectedProtocol.name}</strong>
-        <p>{selectedProtocol.cue}</p>
-      </div>
+      <div className="viewport">
+        <VisualCanvas
+          running={visualRunning}
+          resetKey={resetKey}
+          background={background}
+          objective={objective}
+          frequencyHz={frequencyHz}
+          amplitude={amplitude}
+          targetSize={targetSize}
+          density={density}
+        />
 
-      <div className="viewport-label bottom">
-        <div>
-          <span>Fondo</span>
-          <strong>{background.enabled ? `${background.type} · ${background.direction}` : "Sin fondo"}</strong>
+        <div className="viewport-label top">
+          <span>
+            {selectedProtocol.category}
+            {selectedProtocol.sourceVideo ? ` · video ${selectedProtocol.sourceVideo}` : ""}
+          </span>
+          <strong>{selectedProtocol.name}</strong>
+          <p>{selectedProtocol.cue}</p>
         </div>
-        <div>
-          <span>Objetivo</span>
-          <strong>{objective.enabled ? `${objective.mode} · ${objective.direction}` : "Sin objetivo"}</strong>
-        </div>
-        <div>
-          <span>Frecuencia</span>
-          <strong>{frequencyHz.toFixed(1)} Hz</strong>
+
+        <div className="viewport-label bottom">
+          <div>
+            <span>Fondo</span>
+            <strong>{background.enabled ? `${background.type} · ${background.direction}` : "Fondo liso"}</strong>
+          </div>
+          <div>
+            <span>Objetivo</span>
+            <strong>{objective.enabled ? `${objective.mode} · ${objective.direction}` : "Sin objetivo"}</strong>
+          </div>
+          <div>
+            <span>Frecuencia</span>
+            <strong>{frequencyHz.toFixed(1)} Hz</strong>
+          </div>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="app-shell">
-      {focusMode && (
-        <div className="focus-mode">
-          <button type="button" onClick={() => setFocusMode(false)} className="focus-exit">
-            <Icon name="close" /> Salir
-          </button>
-          {viewport}
-        </div>
-      )}
+    <div className={`app-shell ${focusMode ? "is-focus-mode" : ""}`}>
+      {focusFeedback && <div className="app-feedback" role="status">{focusFeedback}</div>}
 
       <div className="app-frame">
         <header className="app-header">
@@ -250,7 +330,7 @@ export default function Index() {
             <button type="button" className="secondary-action" onClick={() => setShowSafety(true)}>
               <Icon name="shield" /> Seguridad
             </button>
-            <button type="button" className="dark-action" onClick={() => setFocusMode(true)}>
+            <button type="button" className="dark-action" onClick={enterFocusMode}>
               <Icon name="screen" /> Modo pantalla
             </button>
           </div>
@@ -286,6 +366,9 @@ export default function Index() {
               onDurationChange={setDuration}
               onSetsChange={setSets}
               onRestChange={setRest}
+              durationLocked={sessionLocked}
+              setsLocked={sessionLocked}
+              restLocked={sessionState === "resting"}
             >
               <SessionControls
                 running={running}
@@ -300,7 +383,7 @@ export default function Index() {
           </aside>
 
           <section className="visual-stack">
-            {!focusMode && viewport}
+            {viewport}
             <div className="status-grid">
               <InfoCard
                 label="Cronómetro"
@@ -314,7 +397,7 @@ export default function Index() {
                 soundEnabled={soundEnabled}
                 metronomeEnabled={metronomeEnabled}
                 beat={beat}
-                onToggleSound={() => setSoundEnabled((value) => !value)}
+                onToggleSound={handleToggleSound}
                 onToggleMetronome={() => setMetronomeEnabled((value) => !value)}
               />
             </div>

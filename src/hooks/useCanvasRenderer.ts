@@ -19,13 +19,33 @@ export function useCanvasRenderer(
   useEffect(() => {
     elapsedRef.current = 0;
     lastRef.current = performance.now();
-  }, [resetKey]);
+    const canvas = canvasRef.current;
+    const { width, height } = sizeRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (canvas && ctx && width > 0 && height > 0) {
+      const dpr = window.devicePixelRatio || 1;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawRef.current(ctx, width, height, elapsedRef.current);
+    }
+  }, [canvasRef, resetKey]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const host = hostRef.current;
 
     if (!canvas || !host) return undefined;
+
+    const drawStillFrame = () => {
+      const { width, height } = sizeRef.current;
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx || width <= 0 || height <= 0) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawRef.current(ctx, width, height, elapsedRef.current);
+    };
 
     const resizeCanvas = () => {
       const rect = host.getBoundingClientRect();
@@ -43,6 +63,8 @@ export function useCanvasRenderer(
         canvas.style.width = `${nextWidth}px`;
         canvas.style.height = `${nextHeight}px`;
       }
+
+      requestAnimationFrame(drawStillFrame);
     };
 
     resizeCanvas();
@@ -54,6 +76,23 @@ export function useCanvasRenderer(
   }, [canvasRef, hostRef]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    const { width, height } = sizeRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (!running && canvas && ctx && width > 0 && height > 0) {
+      const dpr = window.devicePixelRatio || 1;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawRef.current(ctx, width, height, elapsedRef.current);
+    }
+  });
+
+  useEffect(() => {
+    if (!running) {
+      lastRef.current = performance.now();
+      return undefined;
+    }
+
     let raf = 0;
 
     const loop = (now: number) => {
@@ -68,7 +107,7 @@ export function useCanvasRenderer(
         const delta = Math.min(0.05, (now - lastRef.current) / 1000);
         lastRef.current = now;
 
-        if (running) elapsedRef.current += delta;
+        elapsedRef.current += delta;
 
         drawRef.current(ctx, width, height, elapsedRef.current);
       }

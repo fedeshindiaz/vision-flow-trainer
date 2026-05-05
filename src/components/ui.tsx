@@ -41,6 +41,7 @@ export function SliderControl({
   step,
   unit,
   onChange,
+  disabled,
 }: {
   label: string;
   value: number;
@@ -49,9 +50,10 @@ export function SliderControl({
   step: number;
   unit: string;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }) {
   return (
-    <label className="control-card">
+    <label className={`control-card ${disabled ? "control-disabled" : ""}`}>
       <span className="control-row">
         <span>{label}</span>
         <strong>
@@ -65,6 +67,7 @@ export function SliderControl({
         max={max}
         step={step}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
       />
     </label>
@@ -79,6 +82,7 @@ export function Stepper({
   max,
   step,
   onChange,
+  disabled,
 }: {
   label: string;
   value: number;
@@ -87,19 +91,20 @@ export function Stepper({
   max: number;
   step: number;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }) {
   return (
-    <div className="stepper">
+    <div className={`stepper ${disabled ? "control-disabled" : ""}`}>
       <span className="stepper-label">{label}</span>
       <div className="stepper-body">
-        <button type="button" onClick={() => onChange(clamp(value - step, min, max))}>
+        <button type="button" disabled={disabled} onClick={() => onChange(clamp(value - step, min, max))}>
           −
         </button>
         <strong>
           {value}
           <small>{unit}</small>
         </strong>
-        <button type="button" onClick={() => onChange(clamp(value + step, min, max))}>
+        <button type="button" disabled={disabled} onClick={() => onChange(clamp(value + step, min, max))}>
           +
         </button>
       </div>

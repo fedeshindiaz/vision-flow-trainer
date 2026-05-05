@@ -10,8 +10,7 @@ export const MODULES = {
 
 export const APP_NAME = "ONUr";
 export const APP_SUBTITLE = "Otoneuro Uruguay Rehabilitación";
-export const APP_ICON_SRC =
-  "https://i.postimg.cc/RZ7ZrQBZ/Chat-GPT-Image-3-may-2026-10-45-29-p-m.png";
+export const APP_ICON_SRC = "/onur-icon.png";
 
 export const protocolCategories = [
   "Todos",
@@ -24,7 +23,7 @@ export const protocolCategories = [
 ] as const;
 
 export const backgroundTypes: Array<{ key: BackgroundType; label: string }> = [
-  { key: "none", label: "Sin fondo" },
+  { key: "none", label: "Fondo liso" },
   { key: "grid", label: "Grilla" },
   { key: "stripes", label: "Franjas" },
   { key: "checkerboard", label: "Ajedrez" },

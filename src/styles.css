@@ -37,6 +37,26 @@ button:disabled {
   padding: 16px;
 }
 
+.app-shell.is-focus-mode {
+  background: #020617;
+}
+
+.app-feedback {
+  position: fixed;
+  left: 50%;
+  top: 18px;
+  z-index: 90;
+  max-width: min(520px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.22);
+}
+
 .app-frame {
   display: flex;
   max-width: 1540px;
@@ -159,7 +179,7 @@ button:disabled {
 }
 
 .chip {
-  min-height: 38px;
+  min-height: 44px;
   border: 0;
   border-radius: 12px;
   background: #f1f5f9;
@@ -210,6 +230,7 @@ button:disabled {
   border: 1px solid #dbe3ee;
   border-radius: 14px;
   background: #fff;
+  min-height: 44px;
   padding: 12px;
   text-align: left;
 }
@@ -245,6 +266,10 @@ button:disabled {
   border-radius: 16px;
   background: #fff;
   padding: 12px;
+}
+
+.control-disabled {
+  opacity: 0.62;
 }
 
 .control-row,
@@ -296,8 +321,8 @@ input[type="range"] {
 }
 
 .stepper button {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 10px;
   background: #f1f5f9;
@@ -320,7 +345,7 @@ input[type="range"] {
 .dark-action,
 .sound-button {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 7px;
@@ -352,6 +377,10 @@ input[type="range"] {
   color: #fff;
 }
 
+.viewport-shell {
+  position: relative;
+}
+
 .viewport {
   position: relative;
   min-height: 580px;
@@ -360,6 +389,21 @@ input[type="range"] {
   border-radius: 24px;
   background: #f8fafc;
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.13);
+}
+
+.is-focus-mode .viewport-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  background: #020617;
+  padding: 12px;
+}
+
+.is-focus-mode .viewport-shell .viewport {
+  width: 100%;
+  min-height: 100%;
+  border-radius: 18px;
 }
 
 .visual-canvas-host {
@@ -486,21 +530,6 @@ input[type="range"] {
   font-size: 13px;
 }
 
-.focus-mode {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  background: #020617;
-  padding: 12px;
-}
-
-.focus-mode .viewport {
-  width: 100%;
-  min-height: 100%;
-  border-radius: 18px;
-}
-
 .focus-exit {
   position: absolute;
   top: 22px;
@@ -516,6 +545,13 @@ input[type="range"] {
   color: #0f172a;
   font-weight: 900;
   box-shadow: 0 18px 32px rgba(15, 23, 42, 0.2);
+}
+
+.panel-note {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .modal-backdrop {

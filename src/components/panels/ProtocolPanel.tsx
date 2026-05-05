@@ -29,6 +29,7 @@ export function ProtocolPanel({
         <h2>Protocolos</h2>
         <span>{protocols.length}</span>
       </div>
+      <p className="panel-note">Los protocolos ajustan fondo, objetivo, frecuencia y metrónomo. No cambian duración, series ni descanso.</p>
 
       <div className="chip-grid two">
         {protocolCategories.map((category) => (

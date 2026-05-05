@@ -27,11 +27,18 @@ function drawTarget(
   ctx.restore();
 }
 
-export function getSaccadePositions(width: number, height: number, amplitude: number, direction: Direction) {
+export function getSaccadePositions(
+  width: number,
+  height: number,
+  amplitude: number,
+  direction: Direction,
+  targetSize = 0,
+) {
   const cx = width / 2;
   const cy = height / 2;
-  const ax = (width * amplitude) / 210;
-  const ay = (height * amplitude) / 240;
+  const radius = targetSize / 2 + 10;
+  const ax = Math.max(0, Math.min((width * amplitude) / 210, width / 2 - radius));
+  const ay = Math.max(0, Math.min((height * amplitude) / 240, height / 2 - radius));
 
   const pairs: Partial<Record<Direction, Array<{ x: number; y: number }>>> = {
     left: [
@@ -105,14 +112,21 @@ export function drawObjective(
 
   const cx = width / 2;
   const cy = height / 2;
-  const ax = (width * amplitude) / 230;
-  const ay = (height * amplitude) / 260;
+  const safeSize = Math.max(8, Math.min(size, Math.max(8, Math.min(width, height) - 24)));
+  const radius = safeSize / 2 + 10;
+  const ax = Math.max(0, Math.min((width * amplitude) / 230, width / 2 - radius));
+  const ay = Math.max(0, Math.min((height * amplitude) / 260, height / 2 - radius));
   const phaseAngle = Math.PI * 2 * frequencyHz * elapsed;
   const phase = Math.sin(phaseAngle);
   let x = cx;
   let y = cy;
   let fill = "#ef4444";
   let label = "X";
+
+  if (config.mode === "fixed") {
+    x = cx;
+    y = cy;
+  }
 
   if (config.mode === "moving") {
     if (config.direction === "lissajous") {
@@ -137,33 +151,36 @@ export function drawObjective(
 
   if (config.mode === "saccade") {
     const stepIndex = Math.floor(elapsed * frequencyHz);
+
     if (config.direction === "lissajous") {
-      // "Infinito" en sacadas = posiciones aleatorias en cada paso
       const pos = getRandomSaccadePosition(stepIndex, cx, cy, ax, ay);
       x = pos.x;
       y = pos.y;
     } else {
-      const positions = getSaccadePositions(width, height, amplitude, config.direction);
+      const positions = getSaccadePositions(width, height, amplitude, config.direction, safeSize);
       const index = stepIndex % positions.length;
       x = positions[index].x;
       y = positions[index].y;
     }
   }
 
-  drawTarget(ctx, x, y, size, fill, label);
+  drawTarget(ctx, x, y, safeSize, fill, label);
 }
 
-// Cache de posiciones aleatorias por paso para que el render sea estable dentro del mismo step
 const randomCache = new Map<number, { x: number; y: number }>();
+
 function getRandomSaccadePosition(step: number, cx: number, cy: number, ax: number, ay: number) {
   const cached = randomCache.get(step);
   if (cached) return cached;
-  // Limpiar cache para que no crezca indefinidamente
+
   if (randomCache.size > 32) randomCache.clear();
+
   const pos = {
     x: cx + (Math.random() * 2 - 1) * ax,
     y: cy + (Math.random() * 2 - 1) * ay,
   };
+
   randomCache.set(step, pos);
+
   return pos;
 }

@@ -1,5 +1,6 @@
+import { useEffect, useRef } from "react";
 import { directionTypes, objectiveModes } from "../../constants/modules";
-import type { Direction, ObjectiveConfig } from "../../types";
+import type { Direction, ObjectiveConfig, ObjectiveMode } from "../../types";
 import { Icon, ToggleButton } from "../ui";
 
 const objectiveDirections: Array<{ key: Direction; label: string }> = [
@@ -15,6 +16,14 @@ export function ObjectivePanel({
   objective: ObjectiveConfig;
   onChange: (objective: ObjectiveConfig) => void;
 }) {
+  const lastObjectiveModeRef = useRef<ObjectiveMode>("fixed");
+
+  useEffect(() => {
+    if (objective.enabled && objective.mode !== "none") {
+      lastObjectiveModeRef.current = objective.mode;
+    }
+  }, [objective.enabled, objective.mode]);
+
   return (
     <section className="panel">
       <div className="panel-header">
@@ -27,7 +36,7 @@ export function ObjectivePanel({
             onChange({
               ...objective,
               enabled: !objective.enabled,
-              mode: !objective.enabled && objective.mode === "none" ? "fixed" : objective.mode,
+              mode: !objective.enabled && objective.mode === "none" ? lastObjectiveModeRef.current : objective.mode,
             })
           }
         >
@@ -65,6 +74,10 @@ export function ObjectivePanel({
           </ToggleButton>
         ))}
       </div>
+
+      {objective.enabled && objective.mode === "fixed" && (
+        <p className="panel-note">En objetivo fijo la dirección solo describe el protocolo; el punto queda centrado.</p>
+      )}
     </section>
   );
 }
