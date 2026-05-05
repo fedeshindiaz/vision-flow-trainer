@@ -136,6 +136,18 @@ export default function Index() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!focusMode) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") void exitFocusMode();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [exitFocusMode, focusMode]);
+
   const resetSession = () => {
     setRunning(false);
     setSessionState("idle");
@@ -268,13 +280,7 @@ export default function Index() {
 
   const viewport = (
     <div className="viewport-shell" ref={focusHostRef}>
-      {focusMode && (
-        <button type="button" onClick={exitFocusMode} className="focus-exit">
-          <Icon name="close" /> Salir
-        </button>
-      )}
-
-      <div className="viewport">
+      <div className="viewport" onDoubleClick={focusMode ? () => void exitFocusMode() : undefined}>
         <VisualCanvas
           running={visualRunning}
           resetKey={resetKey}
@@ -315,7 +321,7 @@ export default function Index() {
 
   return (
     <div className={`app-shell ${focusMode ? "is-focus-mode" : ""}`}>
-      {focusFeedback && <div className="app-feedback" role="status">{focusFeedback}</div>}
+      {focusFeedback && !focusMode && <div className="app-feedback" role="status">{focusFeedback}</div>}
 
       <div className="app-frame">
         <header className="app-header">
