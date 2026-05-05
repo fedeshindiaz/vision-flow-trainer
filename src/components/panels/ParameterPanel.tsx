@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Icon, SliderControl, Stepper } from "../ui";
 
 interface ParameterPanelProps {
@@ -21,7 +21,6 @@ interface ParameterPanelProps {
   durationLocked?: boolean;
   setsLocked?: boolean;
   restLocked?: boolean;
-  children: ReactNode;
 }
 
 export function ParameterPanel({
@@ -44,7 +43,6 @@ export function ParameterPanel({
   durationLocked,
   setsLocked,
   restLocked,
-  children,
 }: ParameterPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const summary = `${sets} series · ${rest}s descanso · ${duration}s · ${frequencyHz.toFixed(1)} Hz`;
@@ -67,16 +65,15 @@ export function ParameterPanel({
 
         <button
           type="button"
-          className="collapse-button text-collapse-button"
+          className="collapse-button"
+          aria-label={expanded ? "Ocultar parámetros" : "Mostrar parámetros"}
           aria-expanded={expanded}
           aria-controls="parameter-panel-body"
           onClick={() => setExpanded((value) => !value)}
         >
-          {expanded ? "Ocultar" : "Ajustes"}
+          {expanded ? "-" : "+"}
         </button>
       </div>
-
-      {children}
 
       {expanded && (
         <div className="panel-body parameter-settings" id="parameter-panel-body">

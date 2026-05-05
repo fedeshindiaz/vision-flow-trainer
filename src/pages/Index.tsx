@@ -371,6 +371,18 @@ export default function Index() {
               onApplyProtocol={applyProtocol}
             />
 
+            <section className="panel session-panel" aria-label="Controles de sesión">
+              <SessionControls
+                running={running}
+                playLabel={playLabel}
+                skipLabel={skipLabel}
+                skipDisabled={skipDisabled}
+                onPlayPause={handlePlayPause}
+                onSkip={handleSkip}
+                onReset={resetSession}
+              />
+            </section>
+
             <ParameterPanel
               frequencyHz={frequencyHz}
               amplitude={amplitude}
@@ -391,17 +403,7 @@ export default function Index() {
               durationLocked={sessionLocked}
               setsLocked={sessionLocked}
               restLocked={sessionState === "resting"}
-            >
-              <SessionControls
-                running={running}
-                playLabel={playLabel}
-                skipLabel={skipLabel}
-                skipDisabled={skipDisabled}
-                onPlayPause={handlePlayPause}
-                onSkip={handleSkip}
-                onReset={resetSession}
-              />
-            </ParameterPanel>
+            />
             <BackgroundPanel background={background} onChange={setBackground} />
             <ObjectivePanel objective={objective} onChange={setObjective} />
           </aside>
