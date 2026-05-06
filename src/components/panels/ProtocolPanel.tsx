@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { protocolCategories } from "../../constants/modules";
 import type { Protocol } from "../../types";
-import { ToggleButton } from "../ui";
+import { Icon, ToggleButton } from "../ui";
 
 interface ProtocolPanelProps {
   protocols: Protocol[];
@@ -45,7 +45,9 @@ export function ProtocolPanel({
           aria-controls="protocol-panel-body"
           onClick={() => setExpanded((value) => !value)}
         >
-          <span className="panel-title-main">Protocolos</span>
+          <span className="panel-title-main">
+            <Icon name="protocols" /> Protocolos
+          </span>
           <span className="panel-summary">{summary}</span>
         </button>
 
@@ -59,7 +61,7 @@ export function ProtocolPanel({
             aria-controls="protocol-panel-body"
             onClick={() => setExpanded((value) => !value)}
           >
-            {expanded ? "-" : "+"}
+            <Icon name={expanded ? "minus" : "plus"} />
           </button>
         </div>
       </div>

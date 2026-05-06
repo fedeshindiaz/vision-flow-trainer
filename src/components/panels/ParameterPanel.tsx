@@ -71,7 +71,7 @@ export function ParameterPanel({
           aria-controls="parameter-panel-body"
           onClick={() => setExpanded((value) => !value)}
         >
-          {expanded ? "-" : "+"}
+          <Icon name={expanded ? "minus" : "plus"} />
         </button>
       </div>
 

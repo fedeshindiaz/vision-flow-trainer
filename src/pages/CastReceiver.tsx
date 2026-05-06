@@ -178,6 +178,7 @@ export default function CastReceiver() {
   const visualRunning = sharedState.running && sharedState.sessionState === "playing";
   const visualElapsedMs = useMemo(() => computeVisualElapsedMs(sharedState), [sharedState]);
   const overlayStatus = receiverError || (receiverReady ? labelForStatus(receiverStatus) : "Esperando control...");
+  const showOverlay = Boolean(receiverError) || sharedState.sessionState !== "playing";
 
   return (
     <main className="cast-receiver-page">
@@ -194,13 +195,15 @@ export default function CastReceiver() {
         syncElapsedMs={visualElapsedMs}
       />
 
-      <div className="cast-receiver-overlay" aria-live="polite">
-        <span>{overlayStatus}</span>
-        <strong>{sharedState.selectedProtocolName}</strong>
-        <p>
+      {showOverlay && (
+        <div className="cast-receiver-overlay" aria-live="polite">
+          <span>{overlayStatus}</span>
+          <strong>{sharedState.selectedProtocolName}</strong>
+          <p>
           {formatTime(sharedState.timeLeft)} · serie {sharedState.currentSet}/{sharedState.sets}
-        </p>
-      </div>
+          </p>
+        </div>
+      )}
     </main>
   );
 }

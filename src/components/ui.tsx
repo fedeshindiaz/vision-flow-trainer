@@ -1,11 +1,50 @@
 import type { ReactNode } from "react";
-import { iconMap } from "../constants/modules";
+import {
+  Cast,
+  Circle,
+  ClipboardList,
+  Grid3X3,
+  Maximize2,
+  Minus,
+  Pause,
+  Play,
+  Plus,
+  RotateCcw,
+  Shield,
+  SkipForward,
+  SlidersHorizontal,
+  Target,
+  Volume2,
+  X,
+} from "lucide-react";
 import { clamp } from "../utils";
 
-export function Icon({ name, className = "" }: { name: keyof typeof iconMap; className?: string }) {
+const iconComponents = {
+  sound: Volume2,
+  close: X,
+  shield: Shield,
+  play: Play,
+  pause: Pause,
+  skip: SkipForward,
+  reset: RotateCcw,
+  target: Target,
+  bg: Grid3X3,
+  mix: SlidersHorizontal,
+  screen: Maximize2,
+  cast: Cast,
+  protocols: ClipboardList,
+  plus: Plus,
+  minus: Minus,
+} as const;
+
+export type IconName = keyof typeof iconComponents;
+
+export function Icon({ name, className = "" }: { name: IconName; className?: string }) {
+  const IconComponent = iconComponents[name] ?? Circle;
+
   return (
     <span aria-hidden="true" className={`icon ${className}`}>
-      {iconMap[name] || "•"}
+      <IconComponent strokeWidth={2.2} />
     </span>
   );
 }

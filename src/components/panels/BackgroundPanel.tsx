@@ -57,7 +57,7 @@ export function BackgroundPanel({
             aria-controls="background-panel-body"
             onClick={() => setExpanded((value) => !value)}
           >
-            {expanded ? "-" : "+"}
+            <Icon name={expanded ? "minus" : "plus"} />
           </button>
         </div>
       </div>
