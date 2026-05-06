@@ -300,17 +300,6 @@ export default function Index() {
 
         <main className="main-grid">
           <aside className="side-stack">
-            <ProtocolPanel
-              protocols={protocols}
-              visibleProtocols={visibleProtocols}
-              selectedProtocolId={selectedProtocolId}
-              protocolCategory={protocolCategory}
-              query={query}
-              onCategoryChange={handleCategoryChange}
-              onQueryChange={setQuery}
-              onApplyProtocol={applyProtocol}
-            />
-
             <section className="panel session-panel" aria-label="Controles de sesión">
               <SessionControls
                 running={running}
@@ -322,6 +311,17 @@ export default function Index() {
                 onReset={resetSession}
               />
             </section>
+
+            <ProtocolPanel
+              protocols={protocols}
+              visibleProtocols={visibleProtocols}
+              selectedProtocolId={selectedProtocolId}
+              protocolCategory={protocolCategory}
+              query={query}
+              onCategoryChange={handleCategoryChange}
+              onQueryChange={setQuery}
+              onApplyProtocol={applyProtocol}
+            />
 
             <ParameterPanel
               frequencyHz={frequencyHz}
