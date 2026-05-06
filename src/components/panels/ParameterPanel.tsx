@@ -78,23 +78,23 @@ export function ParameterPanel({
       {expanded && (
         <div className="panel-body parameter-settings" id="parameter-panel-body">
           <div className="split-grid">
-            <Stepper label="Series" value={sets} unit="" min={1} max={8} step={1} disabled={setsLocked} onChange={onSetsChange} />
-            <Stepper label="Descanso" value={rest} unit="s" min={10} max={120} step={5} disabled={restLocked} onChange={onRestChange} />
+            <Stepper label="Series" value={sets} unit="" min={0} max={8} step={1} disabled={setsLocked} onChange={onSetsChange} />
+            <Stepper label="Descanso" value={rest} unit="s" min={0} max={120} step={5} disabled={restLocked} onChange={onRestChange} />
           </div>
 
           <div className="split-grid">
             <Stepper label="Frecuencia" value={frequencyHz} unit="Hz" min={0.1} max={3} step={0.1} onChange={onFrequencyChange} />
-            <Stepper label="Amplitud" value={amplitude} unit="%" min={10} max={80} step={5} onChange={onAmplitudeChange} />
+            <Stepper label="Amplitud" value={amplitude} unit="%" min={0} max={80} step={5} onChange={onAmplitudeChange} />
           </div>
 
           <div className="split-grid">
-            <Stepper label="Duración" value={duration} unit="s" min={10} max={180} step={5} disabled={durationLocked} onChange={onDurationChange} />
-            <Stepper label="Tamaño objeto" value={targetSize} unit="px" min={10} max={90} step={5} onChange={onTargetSizeChange} />
+            <Stepper label="Duración" value={duration} unit="s" min={0} max={180} step={5} disabled={durationLocked} onChange={onDurationChange} />
+            <Stepper label="Tamaño objeto" value={targetSize} unit="px" min={0} max={90} step={5} onChange={onTargetSizeChange} />
           </div>
 
           <div className="split-grid">
-            <Stepper label="Separación fondo" value={density} unit="px" min={32} max={180} step={4} onChange={onDensityChange} />
-            <Stepper label="Tamaño franjas" value={stripeSize} unit="px" min={4} max={120} step={4} onChange={onStripeSizeChange} />
+            <Stepper label="Separación fondo" value={density} unit="px" min={0} max={180} step={4} onChange={onDensityChange} />
+            <Stepper label="Tamaño franjas" value={stripeSize} unit="px" min={0} max={120} step={4} onChange={onStripeSizeChange} />
           </div>
         </div>
       )}

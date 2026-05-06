@@ -31,7 +31,8 @@ export type Direction =
   | "jiggle"
   | "warp"
   | "multi"
-  | "lissajous";
+  | "lissajous"
+  | "center-cardinal";
 
 export type ObjectiveMode = "none" | "fixed" | "moving" | "smooth" | "saccade";
 
@@ -63,4 +64,13 @@ export interface Protocol {
   objective: ObjectiveConfig;
   frequencyHz: number;
   metronome: boolean;
+  defaults?: Partial<{
+    amplitude: number;
+    targetSize: number;
+    density: number;
+    stripeSize: number;
+    duration: number;
+    sets: number;
+    rest: number;
+  }>;
 }

@@ -66,7 +66,7 @@ export function ProtocolPanel({
 
       {expanded && (
         <div className="panel-body" id="protocol-panel-body">
-          <p className="panel-note">Los protocolos ajustan fondo, objetivo, frecuencia y metronomo. No cambian duracion, series ni descanso.</p>
+          <p className="panel-note">Los protocolos ajustan fondo, objetivo, frecuencia y metrónomo. Guiados inicia valores mínimos para personalizar.</p>
 
           <div className="chip-grid two">
             {protocolCategories.map((category) => (

@@ -91,6 +91,16 @@ export function getSaccadePositions(
       { x: cx - ax, y: cy + ay },
       { x: cx, y: cy },
     ],
+    "center-cardinal": [
+      { x: cx, y: cy },
+      { x: cx - ax, y: cy },
+      { x: cx, y: cy },
+      { x: cx + ax, y: cy },
+      { x: cx, y: cy },
+      { x: cx, y: cy - ay },
+      { x: cx, y: cy },
+      { x: cx, y: cy + ay },
+    ],
   };
 
   return pairs[direction] ?? [

@@ -17,7 +17,6 @@ export const protocolCategories = [
   "RVO x1",
   "RVO x2",
   "Optocinético",
-  "Seguimiento suave",
   "Sacadas correctivas",
   "Guiados",
 ] as const;
