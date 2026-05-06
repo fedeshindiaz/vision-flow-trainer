@@ -26,7 +26,7 @@ interface CastWindow extends Window {
 }
 
 export function CastProvider({ children }: { children: ReactNode }) {
-  const appId = (import.meta.env.VITE_CAST_APP_ID as string | undefined)?.trim() ?? "";
+  const appId = (import.meta.env.VITE_CAST_APP_ID as string | undefined)?.trim() || "410BB6F0";
   const isReceiverRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/cast-receiver");
   const [sdkStatus, setSdkStatus] = useState<CastSdkStatus>(isReceiverRoute ? "disabled" : appId ? "loading" : "not_configured");
   const [castState, setCastState] = useState("UNKNOWN");
