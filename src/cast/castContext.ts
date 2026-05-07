@@ -7,6 +7,8 @@ export interface CastSessionLike {
   removeMessageListener?: (namespace: string, listener: (namespace: string, message: unknown) => void) => void;
   sendMessage?: (namespace: string, data: unknown) => Promise<unknown>;
   endSession?: (stopCasting: boolean) => Promise<unknown>;
+  getSessionId?: () => string;
+  getSessionObj?: () => Record<string, unknown>;
 }
 
 export interface CastContextLike {
@@ -18,6 +20,17 @@ export interface CastContextLike {
   removeEventListener?: (eventType: string, listener: (event: Record<string, unknown>) => void) => void;
 }
 
+export interface CastDebugInfo {
+  sdkScriptPresent: boolean;
+  sdkScriptLoaded: boolean;
+  gCastApiAvailable: boolean | null;
+  castFrameworkAvailable: boolean;
+  setOptionsAppId: string;
+  setOptionsCallCount: number;
+  autoJoinPolicy?: string;
+  lastInitializationError: string;
+}
+
 export interface CastProviderValue {
   appId: string;
   sdkStatus: CastSdkStatus;
@@ -25,6 +38,7 @@ export interface CastProviderValue {
   sessionState: string;
   currentSession: CastSessionLike | null;
   castContext: CastContextLike | null;
+  debugInfo: CastDebugInfo;
   isConfigured: boolean;
   isConnected: boolean;
   requestSession: () => Promise<void>;

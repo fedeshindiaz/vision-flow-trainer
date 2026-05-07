@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import "../styles.css";
 import { AppHeader } from "../components/AppHeader";
+import { CastDebugPanel } from "../components/CastDebugPanel";
 import { BackgroundPanel } from "../components/panels/BackgroundPanel";
 import { ObjectivePanel } from "../components/panels/ObjectivePanel";
 import { ParameterPanel } from "../components/panels/ParameterPanel";
@@ -340,6 +341,7 @@ export default function Index() {
       </div>
 
       {showSafety && <SafetyModal onClose={() => setShowSafety(false)} />}
+      <CastDebugPanel statusLabel={castSender.statusLabel} senderLastError={castSender.lastError} />
     </div>
   );
 }

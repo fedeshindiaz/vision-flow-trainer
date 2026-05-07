@@ -111,10 +111,11 @@ export function useCastSender(sharedState: SharedExerciseState) {
   const statusLabel = useMemo(() => {
     if (!cast.isConfigured) return "Cast no configurado";
     if (cast.sdkStatus === "loading") return "Cargando";
-    if (cast.sdkStatus === "error" || cast.sdkStatus === "unavailable") return "No disponible";
+    if (cast.sdkStatus === "error") return "Error SDK";
+    if (cast.sdkStatus === "unavailable") return "SDK no disponible";
     if (cast.isConnected) return "Transmitiendo";
     if (cast.castState === "CONNECTING") return "Conectando";
-    if (cast.castState === "NO_DEVICES_AVAILABLE") return "No disponible";
+    if (cast.castState === "NO_DEVICES_AVAILABLE") return "Sin receptor compatible";
     if (cast.sdkStatus === "available") return "Disponible";
     return "No disponible";
   }, [cast.castState, cast.isConfigured, cast.isConnected, cast.sdkStatus]);

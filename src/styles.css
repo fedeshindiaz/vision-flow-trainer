@@ -702,6 +702,78 @@ input[type="range"] {
   opacity: 0.001;
 }
 
+.cast-debug-panel {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 95;
+  width: min(440px, calc(100vw - 28px));
+  max-height: min(70dvh, 620px);
+  overflow: auto;
+  border: 1px solid rgba(17, 24, 39, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--heading);
+  padding: 12px;
+  box-shadow: 0 18px 45px rgba(17, 24, 39, 0.18);
+  backdrop-filter: blur(18px);
+  font-size: 12px;
+}
+
+.cast-debug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.cast-debug-header strong {
+  font-size: 14px;
+}
+
+.cast-debug-header button {
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--heading);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.cast-debug-panel dl {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.cast-debug-panel dl > div {
+  display: grid;
+  grid-template-columns: minmax(118px, 0.42fr) minmax(0, 1fr);
+  gap: 8px;
+  border-radius: 10px;
+  background: rgba(241, 241, 238, 0.75);
+  padding: 6px 8px;
+}
+
+.cast-debug-panel dt,
+.cast-debug-panel dd {
+  margin: 0;
+}
+
+.cast-debug-panel dt {
+  color: var(--muted);
+  font-weight: 760;
+}
+
+.cast-debug-panel dd {
+  overflow-wrap: anywhere;
+  color: var(--heading);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .viewport-shell {
   position: relative;
 }
