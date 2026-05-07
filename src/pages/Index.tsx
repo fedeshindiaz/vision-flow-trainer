@@ -17,13 +17,17 @@ import { useExerciseSession } from "../hooks/useExerciseSession";
 import { useFocusMode } from "../hooks/useFocusMode";
 import { playMetronomeClick, unlockMetronomeAudio, useMetronome } from "../hooks/useMetronome";
 import type { BackgroundConfig, ObjectiveConfig, Protocol } from "../types";
+import { getDeviceEnvironment } from "../utils/deviceDetection";
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? "0.0.0";
 
 export default function Index() {
   const session = useExerciseSession();
   const castSender = useCastSender(session.sharedState);
-  const { focusMode, focusFeedback, focusHostRef, enterFocusMode, exitFocusMode } = useFocusMode();
+  const deviceEnvironment = useMemo(() => getDeviceEnvironment(), []);
+  const { focusMode, focusFeedback, focusHostRef, enterFocusMode, exitFocusMode } = useFocusMode({
+    isAppleEnvironment: deviceEnvironment.isAppleEnvironment,
+  });
   const [protocolCategory, setProtocolCategory] = useState("Todos");
   const [query, setQuery] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -125,9 +129,27 @@ export default function Index() {
   }, [castSender, resetSessionAction, session.sharedState]);
 
   const handlePlayPause = useCallback(() => {
+    const shouldEnterAppleSafeSession =
+      deviceEnvironment.isAppleEnvironment && (sessionState === "idle" || sessionState === "done") && duration > 0 && sets > 0;
+
     handlePlayPauseAction();
+
+    if (shouldEnterAppleSafeSession) {
+      void enterFocusMode();
+    }
+
     void castSender.sendCommand(running ? "PAUSE" : "PLAY", session.sharedState);
-  }, [castSender, handlePlayPauseAction, running, session.sharedState]);
+  }, [
+    castSender,
+    deviceEnvironment.isAppleEnvironment,
+    duration,
+    enterFocusMode,
+    handlePlayPauseAction,
+    running,
+    session.sharedState,
+    sessionState,
+    sets,
+  ]);
 
   const handleSkip = useCallback(() => {
     handleSkipAction();
@@ -179,6 +201,15 @@ export default function Index() {
       updatedAt: Date.now(),
     });
   }, [castSender, metronomeEnabled, setMetronomeEnabled]);
+
+  const handleAppleSafeExit = useCallback(() => {
+    if (running) {
+      handlePlayPauseAction();
+      void castSender.sendCommand("PAUSE", session.sharedState);
+    }
+
+    void exitFocusMode();
+  }, [castSender, exitFocusMode, handlePlayPauseAction, running, session.sharedState]);
 
   const handleFrequencyChange = useCallback(
     (value: number) => {
@@ -240,7 +271,7 @@ export default function Index() {
   const appFeedback = focusFeedback || castSender.lastError;
 
   return (
-    <div className={`app-shell ${focusMode ? "is-focus-mode" : ""}`}>
+    <div className={`app-shell ${focusMode ? "is-focus-mode" : ""} ${deviceEnvironment.isAppleEnvironment ? "apple-environment" : ""}`}>
       {appFeedback && !focusMode && <div className="app-feedback" role="status">{appFeedback}</div>}
 
       <div className="app-frame">
@@ -322,6 +353,13 @@ export default function Index() {
               tempoStartedAtMs={tempoStartedAtMs}
               tempoAccumulatedElapsedMs={tempoAccumulatedElapsedMs}
               onExitFocusMode={() => void exitFocusMode()}
+              isAppleEnvironment={deviceEnvironment.isAppleEnvironment}
+              isAppleTouchEnvironment={deviceEnvironment.isAppleTouchEnvironment}
+              running={running}
+              playLabel={playLabel}
+              onPlayPause={handlePlayPause}
+              onReset={resetSession}
+              onAppleSafeExit={handleAppleSafeExit}
             />
             <SessionMetrics
               timeLeft={timeLeft}

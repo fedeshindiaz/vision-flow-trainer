@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { supportsFullscreenApi } from "../utils/deviceDetection";
 
-export function useFocusMode() {
+export function useFocusMode({ isAppleEnvironment = false }: { isAppleEnvironment?: boolean } = {}) {
   const [focusMode, setFocusMode] = useState(false);
   const [focusFeedback, setFocusFeedback] = useState("");
   const focusHostRef = useRef<HTMLDivElement | null>(null);
@@ -20,7 +21,7 @@ export function useFocusMode() {
   const exitFocusMode = useCallback(async () => {
     setFocusMode(false);
 
-    if (!document.fullscreenElement) return;
+    if (!document.fullscreenElement || !document.exitFullscreen) return;
 
     try {
       await document.exitFullscreen();
@@ -36,8 +37,12 @@ export function useFocusMode() {
 
     const target = focusHostRef.current;
 
-    if (!target?.requestFullscreen) {
-      showFocusFeedback("Modo pantalla interno activo. El navegador no ofrece fullscreen real.");
+    if (!supportsFullscreenApi(target)) {
+      showFocusFeedback(
+        isAppleEnvironment
+          ? "Modo seguro Apple activo. Salir queda visible aunque fullscreen no este disponible."
+          : "Modo pantalla interno activo. El navegador no ofrece fullscreen real.",
+      );
       return;
     }
 
@@ -45,9 +50,13 @@ export function useFocusMode() {
       await target.requestFullscreen();
       fullscreenWasActiveRef.current = true;
     } catch {
-      showFocusFeedback("Modo pantalla interno activo. El navegador bloqueo fullscreen real.");
+      showFocusFeedback(
+        isAppleEnvironment
+          ? "Modo seguro Apple activo. Fullscreen fue bloqueado por el navegador."
+          : "Modo pantalla interno activo. El navegador bloqueo fullscreen real.",
+      );
     }
-  }, [showFocusFeedback]);
+  }, [isAppleEnvironment, showFocusFeedback]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
