@@ -15,17 +15,17 @@ describe("background stripe sizing", () => {
 });
 
 describe("background and objective independence", () => {
-  it("keeps checkerboard static while saccade targets jump", () => {
+  it("keeps checkerboard time independent from saccade target jumps", () => {
     expect(
       getBackgroundElapsed(
         { enabled: true, type: "checkerboard", direction: "right" },
         { enabled: true, mode: "saccade", direction: "right" },
         12.5,
       ),
-    ).toBe(0);
+    ).toBe(12.5);
   });
 
-  it("keeps animated backgrounds available outside checkerboard saccades", () => {
+  it("keeps animated backgrounds continuous across objective modes", () => {
     expect(
       getBackgroundElapsed(
         { enabled: true, type: "stripes", direction: "right" },

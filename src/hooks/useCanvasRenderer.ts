@@ -1,6 +1,13 @@
 import { useEffect, useRef, type RefObject } from "react";
 
-type DrawFn = (ctx: CanvasRenderingContext2D, width: number, height: number, elapsed: number) => void;
+type DrawFn = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  elapsed: number,
+  backgroundElapsed: number,
+  deltaSeconds: number,
+) => void;
 
 export function useCanvasRenderer(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -13,6 +20,8 @@ export function useCanvasRenderer(
   syncBaseElapsedSeconds = 0,
 ) {
   const elapsedRef = useRef(0);
+  const backgroundElapsedRef = useRef(0);
+  const resetKeyRef = useRef<number | null>(null);
   const lastRef = useRef(performance.now());
   const drawRef = useRef(draw);
   const sizeRef = useRef({ width: 0, height: 0 });
@@ -20,7 +29,12 @@ export function useCanvasRenderer(
   drawRef.current = draw;
 
   useEffect(() => {
+    const shouldResetBackground = resetKeyRef.current === null || resetKeyRef.current !== resetKey;
+    resetKeyRef.current = resetKey;
     elapsedRef.current = syncStartMs === null ? syncElapsedSeconds : syncBaseElapsedSeconds;
+    if (shouldResetBackground) {
+      backgroundElapsedRef.current = elapsedRef.current;
+    }
     lastRef.current = performance.now();
     const canvas = canvasRef.current;
     const { width, height } = sizeRef.current;
@@ -29,7 +43,7 @@ export function useCanvasRenderer(
     if (canvas && ctx && width > 0 && height > 0) {
       const dpr = window.devicePixelRatio || 1;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawRef.current(ctx, width, height, elapsedRef.current);
+      drawRef.current(ctx, width, height, elapsedRef.current, backgroundElapsedRef.current, 0);
     }
   }, [canvasRef, resetKey, syncBaseElapsedSeconds, syncElapsedSeconds, syncStartMs]);
 
@@ -57,7 +71,7 @@ export function useCanvasRenderer(
 
       const dpr = window.devicePixelRatio || 1;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawRef.current(ctx, width, height, elapsedRef.current);
+      drawRef.current(ctx, width, height, elapsedRef.current, backgroundElapsedRef.current, 0);
     };
 
     const resizeCanvas = () => {
@@ -96,7 +110,7 @@ export function useCanvasRenderer(
     if (!running && canvas && ctx && width > 0 && height > 0) {
       const dpr = window.devicePixelRatio || 1;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawRef.current(ctx, width, height, elapsedRef.current);
+      drawRef.current(ctx, width, height, elapsedRef.current, backgroundElapsedRef.current, 0);
     }
   });
 
@@ -125,8 +139,9 @@ export function useCanvasRenderer(
         } else {
           elapsedRef.current = syncBaseElapsedSeconds + Math.max(0, (now - syncStartMs) / 1000);
         }
+        backgroundElapsedRef.current += delta;
 
-        drawRef.current(ctx, width, height, elapsedRef.current);
+        drawRef.current(ctx, width, height, elapsedRef.current, backgroundElapsedRef.current, delta);
       }
 
       raf = requestAnimationFrame(loop);

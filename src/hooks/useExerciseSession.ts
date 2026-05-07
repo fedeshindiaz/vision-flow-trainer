@@ -154,11 +154,7 @@ function exerciseSessionReducer(state: ExerciseSessionState, action: SessionActi
       return { ...state, metronomeEnabled: action.value };
     case "SET_NUMBER": {
       if (action.key === "frequencyHz") {
-        return {
-          ...state,
-          frequencyHz: action.value,
-          resetKey: state.running && state.sessionState === "playing" ? state.resetKey + 1 : state.resetKey,
-        };
+        return { ...state, frequencyHz: action.value };
       }
 
       if (action.key === "duration") {
@@ -429,10 +425,9 @@ export function useExerciseSession() {
 
   const setNumber = useCallback(
     (key: NumericConfigKey, value: number) => {
-      if (key === "frequencyHz" && visualRunning) resetVisualClock();
       dispatch({ type: "SET_NUMBER", key, value });
     },
-    [resetVisualClock, visualRunning],
+    [],
   );
 
   const setBackground = useCallback((value: BackgroundConfig) => dispatch({ type: "SET_BACKGROUND", value }), []);

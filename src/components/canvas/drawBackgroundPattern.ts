@@ -1,6 +1,11 @@
 import type { BackgroundConfig, Direction } from "../../types";
 import { clamp, getDirectionSymbol, vectorFor } from "../../utils";
 
+export interface BackgroundPhaseOffset {
+  x: number;
+  y: number;
+}
+
 function drawGrid(ctx: CanvasRenderingContext2D, width: number, height: number, density: number) {
   ctx.save();
   ctx.strokeStyle = "rgba(15,23,42,0.08)";
@@ -71,12 +76,13 @@ export function drawBackgroundPattern(
   stripeSize: number,
   elapsed: number,
   frequencyHz: number,
+  phaseOffset?: BackgroundPhaseOffset,
 ) {
   const period = clamp(density, 24, 180);
   const vector = vectorFor(config.direction);
   const speedPx = period * Math.max(0.05, frequencyHz);
-  let offsetX = vector.x * speedPx * elapsed;
-  let offsetY = vector.y * speedPx * elapsed;
+  let offsetX = phaseOffset?.x ?? vector.x * speedPx * elapsed;
+  let offsetY = phaseOffset?.y ?? vector.y * speedPx * elapsed;
   const dark = "rgba(15,23,42,0.76)";
   const light = "rgba(248,250,252,0.98)";
 

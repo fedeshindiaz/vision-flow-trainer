@@ -1,9 +1,9 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { BackgroundConfig, ObjectiveConfig } from "../../types";
 import { useCanvasRenderer } from "../../hooks/useCanvasRenderer";
 import { drawBackgroundPattern } from "./drawBackgroundPattern";
 import { drawObjective } from "./drawObjective";
-import { getBackgroundElapsed } from "./getBackgroundElapsed";
+import { clamp, vectorFor } from "../../utils";
 
 interface VisualCanvasProps {
   running: boolean;
@@ -36,16 +36,40 @@ export function VisualCanvas({
 }: VisualCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const backgroundPhaseRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    backgroundPhaseRef.current = { x: 0, y: 0 };
+  }, [resetKey]);
 
   useCanvasRenderer(
     canvasRef,
     hostRef,
     running,
     resetKey,
-    (ctx, width, height, elapsed) => {
-      const backgroundElapsed = getBackgroundElapsed(background, objective, elapsed);
+    (ctx, width, height, elapsed, backgroundElapsed, deltaSeconds) => {
+      if (background.enabled && background.type !== "none" && deltaSeconds > 0) {
+        const period = clamp(density, 24, 180);
+        const speedPx = period * Math.max(0.05, frequencyHz);
+        const vector = vectorFor(background.direction);
 
-      drawBackgroundPattern(ctx, width, height, background, density, stripeSize, backgroundElapsed, frequencyHz);
+        backgroundPhaseRef.current = {
+          x: backgroundPhaseRef.current.x + vector.x * speedPx * deltaSeconds,
+          y: backgroundPhaseRef.current.y + vector.y * speedPx * deltaSeconds,
+        };
+      }
+
+      drawBackgroundPattern(
+        ctx,
+        width,
+        height,
+        background,
+        density,
+        stripeSize,
+        backgroundElapsed,
+        frequencyHz,
+        backgroundPhaseRef.current,
+      );
       drawObjective(ctx, width, height, objective, elapsed, frequencyHz, amplitude, targetSize);
     },
     syncElapsedMs / 1000,
