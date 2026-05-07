@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { backgroundTypes, directionTypes } from "../../constants/modules";
+import { backgroundDirectionTypes, backgroundTypes } from "../../constants/modules";
 import type { BackgroundConfig, BackgroundType } from "../../types";
 import { Icon, ToggleButton } from "../ui";
 
@@ -12,7 +12,8 @@ export const BackgroundPanel = memo(function BackgroundPanel({
 }) {
   const [expanded, setExpanded] = useState(false);
   const lastBackgroundTypeRef = useRef<BackgroundType>("stripes");
-  const summary = background.enabled ? `${background.type} · ${background.direction}` : "Fondo liso";
+  const directionLabel = background.direction === "center" ? "fijo" : background.direction;
+  const summary = background.enabled ? `${background.type} · ${directionLabel}` : "Fondo liso";
 
   useEffect(() => {
     if (background.enabled && background.type !== "none") {
@@ -65,19 +66,31 @@ export const BackgroundPanel = memo(function BackgroundPanel({
       {expanded && (
         <div className="panel-body" id="background-panel-body">
           <div className="chip-grid three">
-            {backgroundTypes.map((item) => (
-              <ToggleButton
-                key={item.key}
-                active={background.type === item.key}
-                onClick={() => onChange({ ...background, enabled: item.key !== "none", type: item.key })}
-              >
-                {item.label}
-              </ToggleButton>
-            ))}
+            {backgroundTypes.map((item) => {
+              const nextDirection =
+                item.key === "checkerboard" && background.type !== "checkerboard" ? "center" : background.direction;
+
+              return (
+                <ToggleButton
+                  key={item.key}
+                  active={background.type === item.key}
+                  onClick={() =>
+                    onChange({
+                      ...background,
+                      enabled: item.key !== "none",
+                      type: item.key,
+                      direction: nextDirection,
+                    })
+                  }
+                >
+                  {item.label}
+                </ToggleButton>
+              );
+            })}
           </div>
 
           <div className="chip-grid five">
-            {directionTypes.map((direction) => (
+            {backgroundDirectionTypes.map((direction) => (
               <ToggleButton
                 key={direction.key}
                 active={background.direction === direction.key}

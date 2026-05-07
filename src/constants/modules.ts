@@ -46,6 +46,11 @@ export const directionTypes: Array<{ key: Direction; label: string }> = [
   { key: "warp", label: "Warp" },
 ];
 
+export const backgroundDirectionTypes: Array<{ key: Direction; label: string }> = [
+  { key: "center", label: "Fijo" },
+  ...directionTypes,
+];
+
 export const objectiveModes: Array<{ key: ObjectiveMode; label: string }> = [
   { key: "none", label: "Sin objetivo" },
   { key: "fixed", label: "Fijo" },

@@ -17,4 +17,8 @@ describe("utils", () => {
     expect(vectorFor("top-right")).toEqual({ x: 1, y: -1 });
     expect(vectorFor("bottom-left")).toEqual({ x: -1, y: 1 });
   });
+
+  it("keeps centered backgrounds fixed", () => {
+    expect(vectorFor("center")).toEqual({ x: 0, y: 0 });
+  });
 });
