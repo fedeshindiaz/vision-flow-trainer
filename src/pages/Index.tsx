@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "../styles.css";
 import { AppHeader } from "../components/AppHeader";
 import { CastDebugPanel } from "../components/CastDebugPanel";
@@ -12,6 +12,7 @@ import { SessionControls } from "../components/session/SessionControls";
 import { SessionViewport } from "../components/session/SessionViewport";
 import { protocols } from "../config/protocols";
 import { useCastSender } from "../hooks/useCastSender";
+import { useAppleSafeScrollLock } from "../hooks/useAppleSafeScrollLock";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useExerciseSession } from "../hooks/useExerciseSession";
 import { useFocusMode } from "../hooks/useFocusMode";
@@ -210,6 +211,23 @@ export default function Index() {
 
     void exitFocusMode();
   }, [castSender, exitFocusMode, handlePlayPauseAction, running, session.sharedState]);
+
+  useAppleSafeScrollLock(focusMode && deviceEnvironment.isAppleEnvironment);
+
+  useEffect(() => {
+    if (!focusMode || !deviceEnvironment.isAppleEnvironment) return undefined;
+
+    const handleAppleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      event.preventDefault();
+      handleAppleSafeExit();
+    };
+
+    document.addEventListener("keydown", handleAppleEscape, { capture: true });
+
+    return () => document.removeEventListener("keydown", handleAppleEscape, { capture: true });
+  }, [deviceEnvironment.isAppleEnvironment, focusMode, handleAppleSafeExit]);
 
   const handleFrequencyChange = useCallback(
     (value: number) => {
