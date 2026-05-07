@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { backgroundTypes, directionTypes } from "../../constants/modules";
 import type { BackgroundConfig, BackgroundType } from "../../types";
 import { Icon, ToggleButton } from "../ui";
 
-export function BackgroundPanel({
+export const BackgroundPanel = memo(function BackgroundPanel({
   background,
   onChange,
 }: {
@@ -57,7 +57,7 @@ export function BackgroundPanel({
             aria-controls="background-panel-body"
             onClick={() => setExpanded((value) => !value)}
           >
-            <Icon name={expanded ? "minus" : "plus"} />
+            <Icon name="chevronDown" className={`collapse-icon ${expanded ? "open" : ""}`} />
           </button>
         </div>
       </div>
@@ -98,4 +98,4 @@ export function BackgroundPanel({
       )}
     </section>
   );
-}
+});

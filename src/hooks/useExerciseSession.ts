@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 import type { SharedExerciseState } from "../cast/castMessages";
 import { protocols } from "../config/protocols";
 import type { BackgroundConfig, ObjectiveConfig, Protocol, SessionState } from "../types";
 import { clamp } from "../utils";
+import { useVisualClock } from "./useVisualClock";
 
+const STORAGE_KEY = "onur.exerciseConfig.v1";
 const initialProtocol = protocols.find((protocol) => protocol.id === "okn-1") ?? protocols[0];
+
 const standardDefaults = {
   amplitude: 42,
   targetSize: 38,
@@ -15,350 +18,487 @@ const standardDefaults = {
   rest: 30,
 };
 
+interface ExerciseSessionConfig {
+  selectedProtocolId: string;
+  background: BackgroundConfig;
+  objective: ObjectiveConfig;
+  frequencyHz: number;
+  amplitude: number;
+  targetSize: number;
+  density: number;
+  stripeSize: number;
+  duration: number;
+  sets: number;
+  rest: number;
+  metronomeEnabled: boolean;
+}
+
+interface ExerciseSessionState extends ExerciseSessionConfig {
+  running: boolean;
+  sessionState: SessionState;
+  timeLeft: number;
+  currentSet: number;
+  resetKey: number;
+}
+
+type NumericConfigKey =
+  | "frequencyHz"
+  | "amplitude"
+  | "targetSize"
+  | "density"
+  | "stripeSize"
+  | "duration"
+  | "sets"
+  | "rest";
+
+type SessionAction =
+  | { type: "SET_BACKGROUND"; value: BackgroundConfig }
+  | { type: "SET_OBJECTIVE"; value: ObjectiveConfig }
+  | { type: "SET_NUMBER"; key: NumericConfigKey; value: number }
+  | { type: "SET_METRONOME"; value: boolean }
+  | { type: "RESET_SESSION" }
+  | { type: "APPLY_PROTOCOL"; protocol: Protocol }
+  | { type: "PLAY_PAUSE" }
+  | { type: "SKIP" }
+  | { type: "TICK" }
+  | { type: "START_REST" }
+  | { type: "FINISH_SESSION" }
+  | { type: "FINISH_REST" };
+
 function getInitialSet(setCount: number) {
   return setCount > 0 ? 1 : 0;
 }
 
-export function useExerciseSession() {
-  const [selectedProtocolId, setSelectedProtocolId] = useState(initialProtocol.id);
-  const [background, setBackground] = useState<BackgroundConfig>(initialProtocol.background);
-  const [objective, setObjective] = useState<ObjectiveConfig>(initialProtocol.objective);
-  const [frequencyHz, setFrequencyHz] = useState(initialProtocol.frequencyHz);
-  const [amplitude, setAmplitude] = useState(standardDefaults.amplitude);
-  const [targetSize, setTargetSize] = useState(standardDefaults.targetSize);
-  const [density, setDensity] = useState(standardDefaults.density);
-  const [stripeSize, setStripeSize] = useState(standardDefaults.stripeSize);
-  const [duration, setDuration] = useState(standardDefaults.duration);
-  const [sets, setSets] = useState(standardDefaults.sets);
-  const [rest, setRest] = useState(standardDefaults.rest);
-  const [running, setRunning] = useState(false);
-  const [sessionState, setSessionState] = useState<SessionState>("idle");
-  const [timeLeft, setTimeLeft] = useState(standardDefaults.duration);
-  const [currentSet, setCurrentSet] = useState(1);
-  const [resetKey, setResetKey] = useState(0);
-  const [metronomeEnabled, setMetronomeEnabled] = useState(initialProtocol.metronome);
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [pausedAt, setPausedAt] = useState<number | null>(null);
-  const [accumulatedElapsedMs, setAccumulatedElapsedMs] = useState(0);
-  const [tempoStartedAtMs, setTempoStartedAtMs] = useState<number | null>(null);
-  const [tempoAccumulatedElapsedMs, setTempoAccumulatedElapsedMs] = useState(0);
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
 
-  const selectedProtocol = protocols.find((protocol) => protocol.id === selectedProtocolId) ?? protocols[0];
-  const visualRunning = running && sessionState === "playing";
-  const metronomeActive = visualRunning && metronomeEnabled;
-  const sessionLocked = sessionState === "playing" || sessionState === "resting";
+function isBackgroundConfig(value: unknown): value is BackgroundConfig {
+  return isObject(value) && typeof value.enabled === "boolean" && typeof value.type === "string" && typeof value.direction === "string";
+}
 
-  const resetVisualClock = useCallback(() => {
-    setStartedAt(Date.now());
-    setPausedAt(null);
-    setAccumulatedElapsedMs(0);
-    setTempoStartedAtMs(performance.now());
-    setTempoAccumulatedElapsedMs(0);
-  }, []);
+function isObjectiveConfig(value: unknown): value is ObjectiveConfig {
+  return isObject(value) && typeof value.enabled === "boolean" && typeof value.mode === "string" && typeof value.direction === "string";
+}
 
-  const stopVisualClock = useCallback(() => {
-    setStartedAt(null);
-    setPausedAt(null);
-    setAccumulatedElapsedMs(0);
-    setTempoStartedAtMs(null);
-    setTempoAccumulatedElapsedMs(0);
-  }, []);
+function numberFromStorage(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
 
-  const pauseVisualClock = useCallback(() => {
-    const now = Date.now();
-    const tempoNow = performance.now();
+function readStoredConfig(): Partial<ExerciseSessionConfig> {
+  if (typeof window === "undefined") return {};
 
-    setAccumulatedElapsedMs((value) => (startedAt ? value + Math.max(0, now - startedAt) : value));
-    setTempoAccumulatedElapsedMs((value) =>
-      tempoStartedAtMs === null ? value : value + Math.max(0, tempoNow - tempoStartedAtMs),
-    );
-    setStartedAt(null);
-    setTempoStartedAtMs(null);
-    setPausedAt(now);
-  }, [startedAt, tempoStartedAtMs]);
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
 
-  const resumeVisualClock = useCallback(() => {
-    setStartedAt(Date.now());
-    setTempoStartedAtMs(performance.now());
-    setPausedAt(null);
-  }, []);
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const selectedProtocolId =
+      typeof parsed.selectedProtocolId === "string" && protocols.some((protocol) => protocol.id === parsed.selectedProtocolId)
+        ? parsed.selectedProtocolId
+        : undefined;
 
-  const resetSession = () => {
-    setRunning(false);
-    setSessionState("idle");
-    setCurrentSet(getInitialSet(sets));
-    setTimeLeft(duration);
-    setResetKey((value) => value + 1);
-    stopVisualClock();
-  };
-
-  const applyProtocol = (protocol: Protocol) => {
-    const shouldRestoreDefaults = Boolean(selectedProtocol.defaults) && !protocol.defaults;
-    const nextAmplitude = protocol.defaults?.amplitude ?? (shouldRestoreDefaults ? standardDefaults.amplitude : amplitude);
-    const nextTargetSize = protocol.defaults?.targetSize ?? (shouldRestoreDefaults ? standardDefaults.targetSize : targetSize);
-    const nextDensity = protocol.defaults?.density ?? (shouldRestoreDefaults ? standardDefaults.density : density);
-    const nextStripeSize = protocol.defaults?.stripeSize ?? (shouldRestoreDefaults ? standardDefaults.stripeSize : stripeSize);
-    const nextDuration = protocol.defaults?.duration ?? (shouldRestoreDefaults ? standardDefaults.duration : duration);
-    const nextSets = protocol.defaults?.sets ?? (shouldRestoreDefaults ? standardDefaults.sets : sets);
-    const nextRest = protocol.defaults?.rest ?? (shouldRestoreDefaults ? standardDefaults.rest : rest);
-
-    setSelectedProtocolId(protocol.id);
-    setBackground(protocol.background);
-    setObjective(protocol.objective);
-    setFrequencyHz(protocol.frequencyHz);
-    setAmplitude(nextAmplitude);
-    setTargetSize(nextTargetSize);
-    setDensity(nextDensity);
-    setStripeSize(nextStripeSize);
-    setDuration(nextDuration);
-    setSets(nextSets);
-    setRest(nextRest);
-    setMetronomeEnabled(protocol.metronome);
-    setRunning(false);
-    setSessionState("idle");
-    setCurrentSet(getInitialSet(nextSets));
-    setTimeLeft(nextDuration);
-    setResetKey((value) => value + 1);
-    stopVisualClock();
-  };
-
-  const handlePlayPause = () => {
-    if (sessionState === "idle" || sessionState === "done") {
-      if (duration <= 0 || sets <= 0) {
-        setRunning(false);
-        setSessionState("idle");
-        setCurrentSet(getInitialSet(sets));
-        setTimeLeft(duration);
-        stopVisualClock();
-        return;
-      }
-
-      setCurrentSet(getInitialSet(sets));
-      setTimeLeft(duration);
-      setSessionState("playing");
-      setRunning(true);
-      setResetKey((value) => value + 1);
-      resetVisualClock();
-      return;
-    }
-
-    if (running) {
-      if (sessionState === "playing") {
-        pauseVisualClock();
-      } else {
-        setPausedAt(Date.now());
-      }
-
-      setRunning(false);
-      return;
-    }
-
-    if (sessionState === "playing") {
-      resumeVisualClock();
-    } else {
-      setPausedAt(null);
-    }
-
-    setRunning(true);
-  };
-
-  const handleSkip = () => {
-    if (sessionState === "resting") {
-      setCurrentSet((value) => clamp(value + 1, 1, sets));
-      setTimeLeft(duration);
-      setSessionState("playing");
-      setRunning(true);
-      setResetKey((value) => value + 1);
-      resetVisualClock();
-      return;
-    }
-
-    if (sessionState === "playing" && currentSet < sets) {
-      setCurrentSet((value) => clamp(value + 1, 1, sets));
-      setTimeLeft(duration);
-      setResetKey((value) => value + 1);
-      resetVisualClock();
-      return;
-    }
-
-    if (sessionState === "playing") {
-      setRunning(false);
-      setSessionState("done");
-      setTimeLeft(0);
-      stopVisualClock();
-    }
-  };
-
-  const handleFrequencyChange = (value: number) => {
-    setFrequencyHz(value);
-
-    if (visualRunning) {
-      setResetKey((current) => current + 1);
-      resetVisualClock();
-    }
-  };
-
-  const handleDurationChange = (value: number) => {
-    setDuration(value);
-
-    if (sessionState === "idle") {
-      setTimeLeft(value);
-    }
-  };
-
-  useEffect(() => {
-    if (sessionState === "idle") setTimeLeft(duration);
-  }, [duration, sessionState]);
-
-  useEffect(() => {
-    setCurrentSet((value) => (sets > 0 ? clamp(Math.max(1, value), 1, sets) : 0));
-  }, [sets]);
-
-  useEffect(() => {
-    if (!running) return undefined;
-
-    const id = window.setInterval(() => {
-      setTimeLeft((value) => Math.max(0, value - 1));
-    }, 1000);
-
-    return () => window.clearInterval(id);
-  }, [running]);
-
-  useEffect(() => {
-    if (!running || timeLeft > 0) return;
-
-    if (sessionState === "playing" && currentSet < sets) {
-      setSessionState("resting");
-      setTimeLeft(rest);
-      stopVisualClock();
-      return;
-    }
-
-    if (sessionState === "playing") {
-      setRunning(false);
-      setSessionState("done");
-      setTimeLeft(0);
-      stopVisualClock();
-      return;
-    }
-
-    if (sessionState === "resting" && currentSet < sets) {
-      setCurrentSet((value) => clamp(value + 1, 1, sets));
-      setSessionState("playing");
-      setTimeLeft(duration);
-      setResetKey((value) => value + 1);
-      resetVisualClock();
-      return;
-    }
-
-    setRunning(false);
-    setSessionState("done");
-    setTimeLeft(0);
-    stopVisualClock();
-  }, [currentSet, duration, resetVisualClock, rest, running, sessionState, sets, stopVisualClock, timeLeft]);
-
-  const playLabel =
-    sessionState === "resting"
-      ? running
-        ? "Pausar descanso"
-        : "Continuar"
-      : running
-        ? "Pausar"
-        : sessionState === "done"
-          ? "Repetir"
-          : "Iniciar";
-  const skipLabel = sessionState === "resting" ? "Saltar descanso" : sessionState === "playing" ? "Saltar serie" : "Saltar";
-  const skipDisabled = sessionState === "idle" || sessionState === "done";
-
-  const sharedState = useMemo<SharedExerciseState>(
-    () => ({
+    return {
       selectedProtocolId,
-      selectedProtocolName: selectedProtocol.name,
-      selectedProtocolCategory: selectedProtocol.category,
-      background,
-      objective,
-      frequencyHz,
-      amplitude,
-      targetSize,
-      density,
-      stripeSize,
-      duration,
-      sets,
-      rest,
-      running,
-      sessionState,
-      timeLeft,
-      currentSet,
-      resetKey,
-      metronomeEnabled,
-      updatedAt: Date.now(),
-      startedAt,
-      pausedAt,
-      accumulatedElapsedMs,
+      background: isBackgroundConfig(parsed.background) ? parsed.background : undefined,
+      objective: isObjectiveConfig(parsed.objective) ? parsed.objective : undefined,
+      frequencyHz: numberFromStorage(parsed.frequencyHz),
+      amplitude: numberFromStorage(parsed.amplitude),
+      targetSize: numberFromStorage(parsed.targetSize),
+      density: numberFromStorage(parsed.density),
+      stripeSize: numberFromStorage(parsed.stripeSize),
+      duration: numberFromStorage(parsed.duration),
+      sets: numberFromStorage(parsed.sets),
+      rest: numberFromStorage(parsed.rest),
+      metronomeEnabled: typeof parsed.metronomeEnabled === "boolean" ? parsed.metronomeEnabled : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function createInitialState(): ExerciseSessionState {
+  const stored = readStoredConfig();
+  const protocol = protocols.find((item) => item.id === stored.selectedProtocolId) ?? initialProtocol;
+  const duration = stored.duration ?? protocol.defaults?.duration ?? standardDefaults.duration;
+  const sets = stored.sets ?? protocol.defaults?.sets ?? standardDefaults.sets;
+
+  return {
+    selectedProtocolId: protocol.id,
+    background: stored.background ?? protocol.background,
+    objective: stored.objective ?? protocol.objective,
+    frequencyHz: stored.frequencyHz ?? protocol.frequencyHz,
+    amplitude: stored.amplitude ?? protocol.defaults?.amplitude ?? standardDefaults.amplitude,
+    targetSize: stored.targetSize ?? protocol.defaults?.targetSize ?? standardDefaults.targetSize,
+    density: stored.density ?? protocol.defaults?.density ?? standardDefaults.density,
+    stripeSize: stored.stripeSize ?? protocol.defaults?.stripeSize ?? standardDefaults.stripeSize,
+    duration,
+    sets,
+    rest: stored.rest ?? protocol.defaults?.rest ?? standardDefaults.rest,
+    metronomeEnabled: stored.metronomeEnabled ?? protocol.metronome,
+    running: false,
+    sessionState: "idle",
+    timeLeft: duration,
+    currentSet: getInitialSet(sets),
+    resetKey: 0,
+  };
+}
+
+function exerciseSessionReducer(state: ExerciseSessionState, action: SessionAction): ExerciseSessionState {
+  switch (action.type) {
+    case "SET_BACKGROUND":
+      return { ...state, background: action.value };
+    case "SET_OBJECTIVE":
+      return { ...state, objective: action.value };
+    case "SET_METRONOME":
+      return { ...state, metronomeEnabled: action.value };
+    case "SET_NUMBER": {
+      if (action.key === "frequencyHz") {
+        return {
+          ...state,
+          frequencyHz: action.value,
+          resetKey: state.running && state.sessionState === "playing" ? state.resetKey + 1 : state.resetKey,
+        };
+      }
+
+      if (action.key === "duration") {
+        return {
+          ...state,
+          duration: action.value,
+          timeLeft: state.sessionState === "idle" ? action.value : state.timeLeft,
+        };
+      }
+
+      if (action.key === "sets") {
+        return {
+          ...state,
+          sets: action.value,
+          currentSet: action.value > 0 ? clamp(Math.max(1, state.currentSet), 1, action.value) : 0,
+        };
+      }
+
+      return { ...state, [action.key]: action.value };
+    }
+    case "RESET_SESSION":
+      return {
+        ...state,
+        running: false,
+        sessionState: "idle",
+        currentSet: getInitialSet(state.sets),
+        timeLeft: state.duration,
+        resetKey: state.resetKey + 1,
+      };
+    case "APPLY_PROTOCOL": {
+      const previousProtocol = protocols.find((protocol) => protocol.id === state.selectedProtocolId);
+      const shouldRestoreDefaults = Boolean(previousProtocol?.defaults) && !action.protocol.defaults;
+      const nextDuration = action.protocol.defaults?.duration ?? (shouldRestoreDefaults ? standardDefaults.duration : state.duration);
+      const nextSets = action.protocol.defaults?.sets ?? (shouldRestoreDefaults ? standardDefaults.sets : state.sets);
+
+      return {
+        ...state,
+        selectedProtocolId: action.protocol.id,
+        background: action.protocol.background,
+        objective: action.protocol.objective,
+        frequencyHz: action.protocol.frequencyHz,
+        amplitude: action.protocol.defaults?.amplitude ?? (shouldRestoreDefaults ? standardDefaults.amplitude : state.amplitude),
+        targetSize: action.protocol.defaults?.targetSize ?? (shouldRestoreDefaults ? standardDefaults.targetSize : state.targetSize),
+        density: action.protocol.defaults?.density ?? (shouldRestoreDefaults ? standardDefaults.density : state.density),
+        stripeSize: action.protocol.defaults?.stripeSize ?? (shouldRestoreDefaults ? standardDefaults.stripeSize : state.stripeSize),
+        duration: nextDuration,
+        sets: nextSets,
+        rest: action.protocol.defaults?.rest ?? (shouldRestoreDefaults ? standardDefaults.rest : state.rest),
+        metronomeEnabled: action.protocol.metronome,
+        running: false,
+        sessionState: "idle",
+        currentSet: getInitialSet(nextSets),
+        timeLeft: nextDuration,
+        resetKey: state.resetKey + 1,
+      };
+    }
+    case "PLAY_PAUSE": {
+      if (state.sessionState === "idle" || state.sessionState === "done") {
+        if (state.duration <= 0 || state.sets <= 0) {
+          return {
+            ...state,
+            running: false,
+            sessionState: "idle",
+            currentSet: getInitialSet(state.sets),
+            timeLeft: state.duration,
+          };
+        }
+
+        return {
+          ...state,
+          currentSet: getInitialSet(state.sets),
+          timeLeft: state.duration,
+          sessionState: "playing",
+          running: true,
+          resetKey: state.resetKey + 1,
+        };
+      }
+
+      return { ...state, running: !state.running };
+    }
+    case "SKIP":
+      if (state.sessionState === "resting") {
+        return {
+          ...state,
+          currentSet: clamp(state.currentSet + 1, 1, state.sets),
+          timeLeft: state.duration,
+          sessionState: "playing",
+          running: true,
+          resetKey: state.resetKey + 1,
+        };
+      }
+
+      if (state.sessionState === "playing" && state.currentSet < state.sets) {
+        return {
+          ...state,
+          currentSet: clamp(state.currentSet + 1, 1, state.sets),
+          timeLeft: state.duration,
+          resetKey: state.resetKey + 1,
+        };
+      }
+
+      if (state.sessionState === "playing") {
+        return { ...state, running: false, sessionState: "done", timeLeft: 0 };
+      }
+
+      return state;
+    case "TICK":
+      return state.running ? { ...state, timeLeft: Math.max(0, state.timeLeft - 1) } : state;
+    case "START_REST":
+      return { ...state, sessionState: "resting", timeLeft: state.rest };
+    case "FINISH_SESSION":
+      return { ...state, running: false, sessionState: "done", timeLeft: 0 };
+    case "FINISH_REST":
+      return {
+        ...state,
+        currentSet: clamp(state.currentSet + 1, 1, state.sets),
+        sessionState: "playing",
+        timeLeft: state.duration,
+        resetKey: state.resetKey + 1,
+      };
+    default:
+      return state;
+  }
+}
+
+export function useExerciseSession() {
+  const [state, dispatch] = useReducer(exerciseSessionReducer, undefined, createInitialState);
+  const { clock, resetVisualClock, stopVisualClock, pauseVisualClock, resumeVisualClock } = useVisualClock();
+  const selectedProtocol = protocols.find((protocol) => protocol.id === state.selectedProtocolId) ?? protocols[0];
+  const visualRunning = state.running && state.sessionState === "playing";
+  const metronomeActive = visualRunning && state.metronomeEnabled;
+  const sessionLocked = state.sessionState === "playing" || state.sessionState === "resting";
+  const configForStorage = useMemo<ExerciseSessionConfig>(
+    () => ({
+      selectedProtocolId: state.selectedProtocolId,
+      background: state.background,
+      objective: state.objective,
+      frequencyHz: state.frequencyHz,
+      amplitude: state.amplitude,
+      targetSize: state.targetSize,
+      density: state.density,
+      stripeSize: state.stripeSize,
+      duration: state.duration,
+      sets: state.sets,
+      rest: state.rest,
+      metronomeEnabled: state.metronomeEnabled,
     }),
     [
-      selectedProtocolId,
-      selectedProtocol.name,
-      selectedProtocol.category,
-      background,
-      objective,
-      frequencyHz,
-      amplitude,
-      targetSize,
-      density,
-      stripeSize,
-      duration,
-      sets,
-      rest,
-      running,
-      sessionState,
-      timeLeft,
-      currentSet,
-      resetKey,
-      metronomeEnabled,
-      startedAt,
-      pausedAt,
-      accumulatedElapsedMs,
+      state.amplitude,
+      state.background,
+      state.density,
+      state.duration,
+      state.frequencyHz,
+      state.metronomeEnabled,
+      state.objective,
+      state.rest,
+      state.selectedProtocolId,
+      state.sets,
+      state.stripeSize,
+      state.targetSize,
     ],
   );
 
-  return {
-    selectedProtocolId,
-    selectedProtocol,
-    background,
-    objective,
-    frequencyHz,
-    amplitude,
-    targetSize,
-    density,
-    stripeSize,
-    duration,
-    sets,
-    rest,
-    running,
-    sessionState,
-    timeLeft,
-    currentSet,
-    resetKey,
-    metronomeEnabled,
-    tempoStartedAtMs,
-    tempoAccumulatedElapsedMs,
-    visualRunning,
-    metronomeActive,
-    sessionLocked,
-    playLabel,
-    skipLabel,
-    skipDisabled,
-    sharedState,
-    actions: {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(configForStorage));
+    } catch {
+      // La app sigue funcionando si el navegador bloquea almacenamiento.
+    }
+  }, [configForStorage]);
+
+  useEffect(() => {
+    if (!state.running) return undefined;
+
+    const id = window.setInterval(() => {
+      dispatch({ type: "TICK" });
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [state.running]);
+
+  useEffect(() => {
+    if (!state.running || state.timeLeft > 0) return;
+
+    if (state.sessionState === "playing" && state.currentSet < state.sets) {
+      stopVisualClock();
+      dispatch({ type: "START_REST" });
+      return;
+    }
+
+    if (state.sessionState === "playing") {
+      stopVisualClock();
+      dispatch({ type: "FINISH_SESSION" });
+      return;
+    }
+
+    if (state.sessionState === "resting" && state.currentSet < state.sets) {
+      resetVisualClock();
+      dispatch({ type: "FINISH_REST" });
+      return;
+    }
+
+    stopVisualClock();
+    dispatch({ type: "FINISH_SESSION" });
+  }, [
+    resetVisualClock,
+    state.currentSet,
+    state.duration,
+    state.rest,
+    state.running,
+    state.sessionState,
+    state.sets,
+    state.timeLeft,
+    stopVisualClock,
+  ]);
+
+  const resetSession = useCallback(() => {
+    dispatch({ type: "RESET_SESSION" });
+    stopVisualClock();
+  }, [stopVisualClock]);
+
+  const applyProtocol = useCallback(
+    (protocol: Protocol) => {
+      dispatch({ type: "APPLY_PROTOCOL", protocol });
+      stopVisualClock();
+    },
+    [stopVisualClock],
+  );
+
+  const handlePlayPause = useCallback(() => {
+    const shouldStartFresh = state.sessionState === "idle" || state.sessionState === "done";
+
+    if (shouldStartFresh) {
+      if (state.duration <= 0 || state.sets <= 0) {
+        stopVisualClock();
+      } else {
+        resetVisualClock();
+      }
+    } else if (state.running) {
+      if (state.sessionState === "playing") pauseVisualClock();
+    } else if (state.sessionState === "playing") {
+      resumeVisualClock();
+    }
+
+    dispatch({ type: "PLAY_PAUSE" });
+  }, [
+    pauseVisualClock,
+    resetVisualClock,
+    resumeVisualClock,
+    state.duration,
+    state.running,
+    state.sessionState,
+    state.sets,
+    stopVisualClock,
+  ]);
+
+  const handleSkip = useCallback(() => {
+    if (state.sessionState === "resting" || (state.sessionState === "playing" && state.currentSet < state.sets)) {
+      resetVisualClock();
+    } else if (state.sessionState === "playing") {
+      stopVisualClock();
+    }
+
+    dispatch({ type: "SKIP" });
+  }, [resetVisualClock, state.currentSet, state.sessionState, state.sets, stopVisualClock]);
+
+  const setNumber = useCallback(
+    (key: NumericConfigKey, value: number) => {
+      if (key === "frequencyHz" && visualRunning) resetVisualClock();
+      dispatch({ type: "SET_NUMBER", key, value });
+    },
+    [resetVisualClock, visualRunning],
+  );
+
+  const setBackground = useCallback((value: BackgroundConfig) => dispatch({ type: "SET_BACKGROUND", value }), []);
+  const setObjective = useCallback((value: ObjectiveConfig) => dispatch({ type: "SET_OBJECTIVE", value }), []);
+  const setMetronomeEnabled = useCallback((value: boolean) => dispatch({ type: "SET_METRONOME", value }), []);
+  const setFrequencyHz = useCallback((value: number) => setNumber("frequencyHz", value), [setNumber]);
+  const setAmplitude = useCallback((value: number) => setNumber("amplitude", value), [setNumber]);
+  const setTargetSize = useCallback((value: number) => setNumber("targetSize", value), [setNumber]);
+  const setDensity = useCallback((value: number) => setNumber("density", value), [setNumber]);
+  const setStripeSize = useCallback((value: number) => setNumber("stripeSize", value), [setNumber]);
+  const setDuration = useCallback((value: number) => setNumber("duration", value), [setNumber]);
+  const setSets = useCallback((value: number) => setNumber("sets", value), [setNumber]);
+  const setRest = useCallback((value: number) => setNumber("rest", value), [setNumber]);
+
+  const playLabel =
+    state.sessionState === "resting"
+      ? state.running
+        ? "Pausar descanso"
+        : "Continuar"
+      : state.running
+        ? "Pausar"
+        : state.sessionState === "done"
+          ? "Repetir"
+          : "Iniciar";
+  const skipLabel = state.sessionState === "resting" ? "Saltar descanso" : state.sessionState === "playing" ? "Saltar serie" : "Saltar";
+  const skipDisabled = state.sessionState === "idle" || state.sessionState === "done";
+
+  const sharedState = useMemo<SharedExerciseState>(
+    () => ({
+      selectedProtocolId: state.selectedProtocolId,
+      selectedProtocolName: selectedProtocol.name,
+      selectedProtocolCategory: selectedProtocol.category,
+      background: state.background,
+      objective: state.objective,
+      frequencyHz: state.frequencyHz,
+      amplitude: state.amplitude,
+      targetSize: state.targetSize,
+      density: state.density,
+      stripeSize: state.stripeSize,
+      duration: state.duration,
+      sets: state.sets,
+      rest: state.rest,
+      running: state.running,
+      sessionState: state.sessionState,
+      timeLeft: state.timeLeft,
+      currentSet: state.currentSet,
+      resetKey: state.resetKey,
+      metronomeEnabled: state.metronomeEnabled,
+      updatedAt: Date.now(),
+      startedAt: clock.startedAt,
+      pausedAt: clock.pausedAt,
+      accumulatedElapsedMs: clock.accumulatedElapsedMs,
+    }),
+    [clock, selectedProtocol.category, selectedProtocol.name, state],
+  );
+
+  const actions = useMemo(
+    () => ({
       setBackground,
       setObjective,
-      setFrequencyHz: handleFrequencyChange,
+      setFrequencyHz,
       setAmplitude,
       setTargetSize,
       setDensity,
       setStripeSize,
-      setDuration: handleDurationChange,
+      setDuration,
       setSets,
       setRest,
       setMetronomeEnabled,
@@ -366,6 +506,38 @@ export function useExerciseSession() {
       applyProtocol,
       handlePlayPause,
       handleSkip,
-    },
+    }),
+    [
+      applyProtocol,
+      handlePlayPause,
+      handleSkip,
+      resetSession,
+      setAmplitude,
+      setBackground,
+      setDensity,
+      setDuration,
+      setFrequencyHz,
+      setMetronomeEnabled,
+      setObjective,
+      setRest,
+      setSets,
+      setStripeSize,
+      setTargetSize,
+    ],
+  );
+
+  return {
+    ...state,
+    selectedProtocol,
+    tempoStartedAtMs: clock.tempoStartedAtMs,
+    tempoAccumulatedElapsedMs: clock.tempoAccumulatedElapsedMs,
+    visualRunning,
+    metronomeActive,
+    sessionLocked,
+    playLabel,
+    skipLabel,
+    skipDisabled,
+    sharedState,
+    actions,
   };
 }

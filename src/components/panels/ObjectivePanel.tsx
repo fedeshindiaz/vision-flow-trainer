@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { directionTypes, objectiveModes } from "../../constants/modules";
 import type { Direction, ObjectiveConfig, ObjectiveMode } from "../../types";
 import { Icon, ToggleButton } from "../ui";
@@ -9,7 +9,7 @@ const objectiveDirections: Array<{ key: Direction; label: string }> = [
   { key: "center", label: "Centro" },
 ];
 
-export function ObjectivePanel({
+export const ObjectivePanel = memo(function ObjectivePanel({
   objective,
   onChange,
 }: {
@@ -63,7 +63,7 @@ export function ObjectivePanel({
             aria-controls="objective-panel-body"
             onClick={() => setExpanded((value) => !value)}
           >
-            <Icon name={expanded ? "minus" : "plus"} />
+            <Icon name="chevronDown" className={`collapse-icon ${expanded ? "open" : ""}`} />
           </button>
         </div>
       </div>
@@ -108,4 +108,4 @@ export function ObjectivePanel({
       )}
     </section>
   );
-}
+});

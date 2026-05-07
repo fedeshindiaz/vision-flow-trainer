@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Icon, Stepper } from "../ui";
 
 interface ParameterPanelProps {
@@ -23,7 +23,7 @@ interface ParameterPanelProps {
   restLocked?: boolean;
 }
 
-export function ParameterPanel({
+export const ParameterPanel = memo(function ParameterPanel({
   frequencyHz,
   amplitude,
   targetSize,
@@ -71,7 +71,7 @@ export function ParameterPanel({
           aria-controls="parameter-panel-body"
           onClick={() => setExpanded((value) => !value)}
         >
-          <Icon name={expanded ? "minus" : "plus"} />
+          <Icon name="chevronDown" className={`collapse-icon ${expanded ? "open" : ""}`} />
         </button>
       </div>
 
@@ -100,4 +100,4 @@ export function ParameterPanel({
       )}
     </section>
   );
-}
+});

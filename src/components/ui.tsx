@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   Cast,
+  ChevronDown,
   Circle,
   ClipboardList,
   Grid3X3,
@@ -35,6 +36,7 @@ const iconComponents = {
   protocols: ClipboardList,
   plus: Plus,
   minus: Minus,
+  chevronDown: ChevronDown,
 } as const;
 
 export type IconName = keyof typeof iconComponents;
@@ -145,14 +147,14 @@ export function Stepper({
       <span className="stepper-label">{label}</span>
       <div className="stepper-body">
         <button type="button" disabled={disabled} onClick={() => changeBy(-step)}>
-          -
+          <Icon name="minus" />
         </button>
         <strong>
           {formattedValue}
           <small>{unit}</small>
         </strong>
         <button type="button" disabled={disabled} onClick={() => changeBy(step)}>
-          +
+          <Icon name="plus" />
         </button>
       </div>
     </div>

@@ -2,6 +2,8 @@
 
 Otoneuro Uruguay Rehabilitacion. App web React + Vite + TypeScript para entrenamiento vestibulo-visual con protocolos RVO x1, RVO x2, optocinetico, seguimiento suave y sacadas correctivas.
 
+Nombre canonico del producto: **ONUr**. El repositorio historico puede aparecer como `vision-flow-trainer`, pero el paquete, UI, README y documentacion usan ONUr. El namespace Cast se mantiene como `urn:x-cast:com.onur.visionflow` por compatibilidad con el receiver ya registrado.
+
 ## Desarrollo
 
 ```bash
@@ -16,6 +18,21 @@ npm run build
 npm run lint
 npm test
 ```
+
+## Persistencia local
+
+La app guarda en `localStorage` solo configuracion operativa: protocolo seleccionado, fondo, objetivo, frecuencia, amplitud, duracion, series, descanso, tamano de objetivo, separacion/tamano de franjas y metronomo. No guarda sesiones clinicas, historial, sintomas ni CSV. Al refrescar, la configuracion vuelve, pero la sesion arranca en estado `idle`.
+
+## PWA
+
+ONUr genera manifest y service worker con `vite-plugin-pwa`. En produccion puede instalarse en el dispositivo y servir assets cacheados para tolerar WiFi inestable. Para validar:
+
+```bash
+npm run build
+npm run preview
+```
+
+Luego revisar en Chrome DevTools > Application que exista Manifest y Service Worker.
 
 ## Google Cast real
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { protocolCategories } from "../../constants/modules";
 import type { Protocol } from "../../types";
 import { Icon, ToggleButton } from "../ui";
@@ -14,7 +14,7 @@ interface ProtocolPanelProps {
   onApplyProtocol: (protocol: Protocol) => void;
 }
 
-export function ProtocolPanel({
+export const ProtocolPanel = memo(function ProtocolPanel({
   protocols,
   visibleProtocols,
   selectedProtocolId,
@@ -61,7 +61,7 @@ export function ProtocolPanel({
             aria-controls="protocol-panel-body"
             onClick={() => setExpanded((value) => !value)}
           >
-            <Icon name={expanded ? "minus" : "plus"} />
+            <Icon name="chevronDown" className={`collapse-icon ${expanded ? "open" : ""}`} />
           </button>
         </div>
       </div>
@@ -104,4 +104,4 @@ export function ProtocolPanel({
       )}
     </section>
   );
-}
+});
