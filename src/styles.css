@@ -28,24 +28,6 @@
   text-rendering: optimizeLegibility;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #10130f;
-    --surface: rgba(28, 31, 27, 0.78);
-    --surface-strong: rgba(32, 35, 31, 0.94);
-    --surface-soft: #242820;
-    --surface-secondary: #31362d;
-    --text: #e6e4dc;
-    --heading: #fbfaf5;
-    --muted: #b4baaf;
-    --muted-soft: #879084;
-    --border: rgba(247, 247, 245, 0.1);
-    --border-strong: rgba(247, 247, 245, 0.18);
-    --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.24);
-    --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.2);
-  }
-}
-
 * {
   box-sizing: border-box;
 }
@@ -1231,8 +1213,7 @@ input[type="range"] {
 
   .chip-grid.three,
   .chip-grid.five,
-  .split-grid,
-  .viewport-label.bottom {
+  .split-grid {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -1242,24 +1223,58 @@ input[type="range"] {
   }
 
   .viewport-label.top {
-    top: 14px;
-    left: 14px;
-    max-width: calc(100% - 28px);
-    padding: 14px;
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+    border-radius: 18px;
+    padding: 9px 10px;
+  }
+
+  .viewport-label.top span {
+    font-size: 9px;
+    line-height: 1.1;
   }
 
   .viewport-label.top strong {
-    font-size: 18px;
+    margin-top: 4px;
+    font-size: 14px;
+    line-height: 1.16;
+  }
+
+  .viewport-label.top p {
+    display: -webkit-box;
+    margin-top: 4px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 11px;
+    line-height: 1.25;
   }
 
   .viewport-label.bottom {
-    right: 12px;
-    bottom: 12px;
-    left: 12px;
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    border-radius: 18px;
+    padding: 6px;
   }
 
-  .viewport-label.bottom > div:last-child {
-    grid-column: span 2;
+  .viewport-label.bottom > div {
+    border-radius: 14px;
+    padding: 8px;
+  }
+
+  .viewport-label.bottom span {
+    font-size: 8px;
+    line-height: 1.05;
+  }
+
+  .viewport-label.bottom strong {
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.15;
   }
 }
 
@@ -1291,59 +1306,33 @@ input[type="range"] {
   .metronome-card {
     padding: 14px;
   }
-}
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background: var(--bg);
+  .viewport {
+    min-height: clamp(280px, 43dvh, 340px);
   }
 
-  .app-shell {
-    background:
-      radial-gradient(circle at 18% 0%, rgba(244, 196, 0, 0.14), transparent 28%),
-      radial-gradient(circle at 92% 86%, rgba(244, 196, 0, 0.1), transparent 24%),
-      linear-gradient(180deg, #171a15 0%, var(--bg) 56%, #090b08 100%);
+  .viewport-label.top {
+    padding: 8px 9px;
   }
 
-  .chip,
-  .collapse-button,
-  .stepper button {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text);
+  .viewport-label.top strong {
+    font-size: 13px;
   }
 
-  .chip:hover {
-    background: rgba(255, 255, 255, 0.12);
-  }
-
-  .search-input,
-  .protocol-item,
-  .control-card,
-  .stepper,
-  .sound-button,
-  .viewport-label {
-    background: rgba(32, 35, 31, 0.76);
+  .viewport-label.top p {
+    font-size: 10px;
   }
 
   .viewport-label.bottom {
-    background:
-      linear-gradient(135deg, rgba(244, 196, 0, 0.16), rgba(32, 35, 31, 0.84)),
-      rgba(32, 35, 31, 0.84);
+    gap: 5px;
+    padding: 5px;
   }
 
   .viewport-label.bottom > div {
-    background: rgba(255, 255, 255, 0.06);
+    padding: 7px 6px;
   }
 
-  .protocol-item.selected {
-    background:
-      linear-gradient(135deg, rgba(244, 196, 0, 0.18), rgba(32, 35, 31, 0.88)),
-      var(--surface-strong);
-  }
-
-  .version-pill,
-  .panel-count {
-    background: rgba(244, 196, 0, 0.16);
-    color: var(--accent-soft);
+  .viewport-label.bottom strong {
+    font-size: 10px;
   }
 }
