@@ -7,6 +7,7 @@ import {
   type CastSdkStatus,
   type CastSessionLike,
 } from "./castContext";
+import { isCastDebugEnabled } from "./castDebug";
 
 const CAST_SENDER_SDK_URL = "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1";
 
@@ -53,9 +54,7 @@ export function CastProvider({ children }: { children: ReactNode }) {
   });
   const initializedRef = useRef(false);
   const removeListenersRef = useRef<(() => void) | null>(null);
-  const debugEnabled =
-    typeof window !== "undefined" &&
-    (import.meta.env.DEV || new URLSearchParams(window.location.search).get("castDebug") === "1");
+  const debugEnabled = isCastDebugEnabled();
 
   useEffect(() => {
     if (isReceiverRoute) {

@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useCastContext } from "../cast/castContext";
+import { isCastDebugEnabled } from "../cast/castDebug";
 
 interface CastDebugPanelProps {
   statusLabel: string;
@@ -8,11 +9,8 @@ interface CastDebugPanelProps {
 
 export function CastDebugPanel({ statusLabel, senderLastError = "" }: CastDebugPanelProps) {
   const cast = useCastContext();
-  const [requestResult, setRequestResult] = useState("");
   const visible = useMemo(() => {
-    if (typeof window === "undefined") return false;
-
-    return import.meta.env.DEV || new URLSearchParams(window.location.search).get("castDebug") === "1";
+    return isCastDebugEnabled();
   }, []);
 
   const sessionObj = cast.currentSession?.getSessionObj?.();
@@ -40,36 +38,12 @@ export function CastDebugPanel({ statusLabel, senderLastError = "" }: CastDebugP
     ["currentSession id", sessionId || "(empty)"],
     ["initError", cast.debugInfo.lastInitializationError || "(none)"],
     ["senderError", senderLastError || "(none)"],
-    ["requestSession", requestResult || "(not tested)"],
   ];
-
-  const handleRequestSession = async () => {
-    setRequestResult("requesting...");
-    console.info("[ONUr Cast debug] requestSession start", {
-      appId: cast.appId,
-      sdkStatus: cast.sdkStatus,
-      castState: cast.castState,
-      sessionState: cast.sessionState,
-    });
-
-    try {
-      await cast.requestSession();
-      setRequestResult("OK");
-      console.info("[ONUr Cast debug] requestSession OK");
-    } catch (error) {
-      const normalized = stringifyUnknown(error);
-      setRequestResult(normalized);
-      console.error("[ONUr Cast debug] requestSession failed", error);
-    }
-  };
 
   return (
     <aside className="cast-debug-panel" aria-label="Diagnostico Google Cast">
       <div className="cast-debug-header">
         <strong>Cast debug</strong>
-        <button type="button" onClick={handleRequestSession}>
-          Test requestSession
-        </button>
       </div>
       <dl>
         {rows.map(([label, value]) => (
@@ -89,15 +63,4 @@ function getString(record: unknown, key: string) {
   const value = (record as Record<string, unknown>)[key];
 
   return typeof value === "string" ? value : "";
-}
-
-function stringifyUnknown(error: unknown) {
-  if (error instanceof Error) return `${error.name}: ${error.message}`;
-  if (typeof error === "string") return error;
-
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
 }
