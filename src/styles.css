@@ -1,5 +1,5 @@
 :root {
-  --bg: #f7f7f5;
+  --bg: #ffffff;
   --surface: rgba(255, 255, 255, 0.78);
   --surface-strong: rgba(255, 255, 255, 0.92);
   --surface-soft: #f1f1ee;
@@ -8,14 +8,14 @@
   --heading: #111827;
   --muted: #6e7785;
   --muted-soft: #9aa1ac;
-  --accent: #f4c400;
-  --accent-soft: #fff4b8;
+  --onur-accent: #ffd000;
+  --onur-accent-soft: #fff2a6;
   --dark-control: #111827;
   --border: rgba(44, 44, 42, 0.08);
   --border-strong: rgba(44, 44, 42, 0.12);
   --shadow-soft: 0 18px 45px rgba(17, 24, 39, 0.08);
   --shadow-card: 0 12px 30px rgba(17, 24, 39, 0.06);
-  --shadow-accent: 0 12px 28px rgba(244, 196, 0, 0.28);
+  --onur-shadow-accent: 0 10px 22px rgba(17, 24, 39, 0.1);
   --radius-xl: 28px;
   --radius-lg: 22px;
   --radius-md: 18px;
@@ -30,6 +30,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -67,6 +68,10 @@ button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
+button:active:not(:disabled) {
+  opacity: 0.82;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.68;
@@ -75,10 +80,7 @@ button:disabled {
 .app-shell {
   min-height: 100dvh;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 18% 0%, rgba(244, 196, 0, 0.2), transparent 28%),
-    radial-gradient(circle at 92% 86%, rgba(244, 196, 0, 0.16), transparent 24%),
-    linear-gradient(180deg, #fbfbfa 0%, var(--bg) 56%, #f0f1ee 100%);
+  background: var(--bg);
   padding:
     max(16px, env(safe-area-inset-top))
     20px
@@ -402,12 +404,10 @@ button:disabled {
 }
 
 .chip-active {
-  border-color: rgba(244, 196, 0, 0.28);
-  background:
-    radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.55), transparent 45%),
-    var(--accent);
+  border-color: rgba(17, 24, 39, 0.12);
+  background: var(--onur-accent);
   color: var(--heading);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--onur-shadow-accent);
 }
 
 .search-input {
@@ -418,6 +418,7 @@ button:disabled {
   background: rgba(255, 255, 255, 0.74);
   padding: 12px 14px;
   color: var(--heading);
+  font-size: 16px;
   outline: none;
   font-weight: 650;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
@@ -456,11 +457,13 @@ button:disabled {
 }
 
 .protocol-item.selected {
-  border-color: rgba(244, 196, 0, 0.54);
-  background:
-    linear-gradient(135deg, rgba(255, 244, 184, 0.72), rgba(255, 255, 255, 0.82)),
-    #fff;
-  box-shadow: 0 12px 26px rgba(244, 196, 0, 0.16);
+  border-color: rgba(17, 24, 39, 0.12);
+  background: var(--onur-accent);
+  box-shadow: var(--onur-shadow-accent);
+}
+
+.protocol-item.selected span {
+  color: rgba(17, 24, 39, 0.7);
 }
 
 .protocol-item strong,
@@ -532,14 +535,14 @@ button:disabled {
 input[type="range"] {
   width: 100%;
   margin: 12px 0 8px;
-  accent-color: var(--accent);
+  accent-color: var(--onur-accent);
 }
 
 .range-fill {
   display: block;
   height: 7px;
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--accent) var(--fill), var(--surface-soft) var(--fill));
+  background: linear-gradient(90deg, var(--onur-accent) var(--fill), var(--surface-soft) var(--fill));
 }
 
 .stepper-label,
@@ -612,12 +615,10 @@ input[type="range"] {
 }
 
 .primary-action {
-  border-color: rgba(244, 196, 0, 0.36);
-  background:
-    radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.58), transparent 44%),
-    var(--accent);
+  border-color: rgba(17, 24, 39, 0.12);
+  background: var(--onur-accent);
   color: var(--heading);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--onur-shadow-accent);
 }
 
 .primary-action.compact {
@@ -654,9 +655,9 @@ input[type="range"] {
 
 .sound-button.enabled {
   border-color: rgba(244, 196, 0, 0.35);
-  background: var(--accent);
+  background: var(--onur-accent);
   color: var(--heading);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--onur-shadow-accent);
 }
 
 .cast-control {
@@ -719,8 +720,9 @@ input[type="range"] {
 
 .cast-control-connected {
   border-color: rgba(244, 196, 0, 0.44);
+  background: var(--onur-accent);
   color: var(--heading);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--onur-shadow-accent);
 }
 
 .cast-control-disabled {
@@ -785,7 +787,7 @@ google-cast-launcher.cast-launcher-icon {
   min-height: 34px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--accent);
+  background: var(--onur-accent);
   color: var(--heading);
   padding: 7px 10px;
   font-size: 12px;
@@ -1026,6 +1028,11 @@ google-cast-launcher.cast-launcher-icon {
   overflow: hidden;
   background: #020617;
   color: #fff;
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
 }
 
 .cast-receiver-page .visual-canvas-host {
@@ -1036,7 +1043,7 @@ google-cast-launcher.cast-launcher-icon {
 .cast-receiver-overlay {
   position: absolute;
   left: 24px;
-  top: 24px;
+  top: max(24px, calc(env(safe-area-inset-top) + 16px));
   z-index: 2;
   max-width: min(520px, calc(100vw - 48px));
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1048,7 +1055,7 @@ google-cast-launcher.cast-launcher-icon {
 }
 
 .cast-receiver-overlay span {
-  color: var(--accent-soft);
+  color: var(--onur-accent-soft);
   font-size: 11px;
   font-weight: 760;
   letter-spacing: 0.04em;
@@ -1114,9 +1121,7 @@ google-cast-launcher.cast-launcher-icon {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding: 10px;
-  background:
-    linear-gradient(135deg, rgba(255, 244, 184, 0.54), rgba(255, 255, 255, 0.84)),
-    rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .viewport-label.bottom > div {
@@ -1212,7 +1217,7 @@ google-cast-launcher.cast-launcher-icon {
 }
 
 .beat.active {
-  background: var(--accent);
+  background: var(--onur-accent);
   box-shadow: 0 0 0 4px rgba(244, 196, 0, 0.14);
 }
 
@@ -1271,9 +1276,9 @@ google-cast-launcher.cast-launcher-icon {
   height: 42px;
   place-items: center;
   border-radius: var(--radius-md);
-  background: var(--accent);
+  background: var(--onur-accent);
   color: var(--heading);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--onur-shadow-accent);
 }
 
 .modal h2 {
@@ -1464,7 +1469,7 @@ google-cast-launcher.cast-launcher-icon {
   }
 
   .session-controls {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .session-controls .secondary-action:last-child {
@@ -1587,6 +1592,10 @@ google-cast-launcher.cast-launcher-icon {
     padding: 14px;
   }
 
+  .chip-grid.five {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .viewport {
     min-height: clamp(280px, 43dvh, 340px);
   }
@@ -1614,5 +1623,28 @@ google-cast-launcher.cast-launcher-icon {
 
   .viewport-label.bottom strong {
     font-size: 10px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .app-shell {
+    padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .app-header {
+    display: none;
+  }
+
+  .session-panel {
+    padding: 10px;
+  }
+
+  .session-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .viewport {
+    min-height: 70dvh;
   }
 }

@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
         name: "ONUr - Otoneuro Uruguay Rehabilitacion",
         short_name: "ONUr",
         description: "Herramienta visual para entrenamiento vestibulo-visual.",
-        theme_color: "#f4c400",
+        theme_color: "#f7f7f5",
         background_color: "#f7f7f5",
         display: "standalone",
         orientation: "portrait",

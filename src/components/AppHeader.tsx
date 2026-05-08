@@ -9,6 +9,7 @@ interface AppHeaderProps {
   castSdkStatus: string;
   castIsConnected: boolean;
   castLastError?: string;
+  isAppleEnvironment: boolean;
   onSafety: () => void;
   onFocusMode: () => void;
 }
@@ -20,6 +21,7 @@ export function AppHeader({
   castSdkStatus,
   castIsConnected,
   castLastError,
+  isAppleEnvironment,
   onSafety,
   onFocusMode,
 }: AppHeaderProps) {
@@ -36,13 +38,15 @@ export function AppHeader({
         </div>
       </div>
       <div className="header-actions">
-        <CastButton
-          statusLabel={castStatusLabel}
-          isConfigured={castIsConfigured}
-          sdkStatus={castSdkStatus}
-          isConnected={castIsConnected}
-          lastError={castLastError}
-        />
+        {!isAppleEnvironment && (
+          <CastButton
+            statusLabel={castStatusLabel}
+            isConfigured={castIsConfigured}
+            sdkStatus={castSdkStatus}
+            isConnected={castIsConnected}
+            lastError={castLastError}
+          />
+        )}
         <button type="button" className="secondary-action" onClick={onSafety}>
           <Icon name="shield" /> Seguridad
         </button>

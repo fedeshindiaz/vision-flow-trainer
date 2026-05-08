@@ -107,7 +107,13 @@ export function useMetronome(
       const delayMs = Math.max(0, beatAtMs - performance.now());
 
       window.setTimeout(() => {
-        if (!cancelled) setBeat((value) => value + 1);
+        if (cancelled) return;
+
+        setBeat((value) => value + 1);
+
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate(8);
+        }
       }, delayMs);
 
       if (!soundRef.current) return;

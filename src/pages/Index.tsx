@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import "../styles.css";
 import { AppHeader } from "../components/AppHeader";
 import { CastDebugPanel } from "../components/CastDebugPanel";
 import { BackgroundPanel } from "../components/panels/BackgroundPanel";
@@ -300,6 +299,7 @@ export default function Index() {
           castSdkStatus={castSender.sdkStatus}
           castIsConnected={castSender.isConnected}
           castLastError={castSender.lastError}
+          isAppleEnvironment={deviceEnvironment.isAppleEnvironment}
           onSafety={() => setShowSafety(true)}
           onFocusMode={enterFocusMode}
         />
