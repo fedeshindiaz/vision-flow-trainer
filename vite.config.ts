@@ -28,13 +28,19 @@ export default defineConfig(({ mode }) => ({
         theme_color: "#f7f7f5",
         background_color: "#f7f7f5",
         display: "standalone",
-        orientation: "portrait",
+        orientation: "natural",
         icons: [
           {
             src: "/onur-icon.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
+          },
+          {
+            src: "/onur-icon.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
         ],
       },

@@ -97,7 +97,10 @@ button:disabled {
 .apple-environment .info-card,
 .apple-environment .metronome-card,
 .apple-environment .viewport-label,
-.apple-environment .cast-control {
+.apple-environment .cast-control,
+.apple-environment .apple-session-control,
+.apple-environment .apple-safe-exit-button,
+.apple-environment .apple-exit-confirm {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -884,6 +887,7 @@ google-cast-launcher.cast-launcher-icon {
 .apple-environment .visual-canvas {
   backface-visibility: hidden;
   transform: translateZ(0);
+  will-change: transform;
 }
 
 .viewport-shell:fullscreen {
@@ -1401,8 +1405,10 @@ google-cast-launcher.cast-launcher-icon {
     gap: 10px;
   }
 
+  /* svh is stable while iOS Safari shows/hides the address bar. dvh changes
+     during scroll, which can resize and clear the canvas backing store. */
   .viewport {
-    min-height: clamp(340px, 52dvh, 460px);
+    min-height: clamp(340px, 52svh, 460px);
   }
 }
 
@@ -1491,7 +1497,7 @@ google-cast-launcher.cast-launcher-icon {
   }
 
   .viewport {
-    min-height: clamp(300px, 46dvh, 380px);
+    min-height: clamp(300px, 46svh, 380px);
     border-radius: var(--radius-xl);
   }
 
@@ -1596,7 +1602,7 @@ google-cast-launcher.cast-launcher-icon {
   }
 
   .viewport {
-    min-height: clamp(280px, 43dvh, 340px);
+    min-height: clamp(280px, 43svh, 340px);
   }
 
   .viewport-label.top {

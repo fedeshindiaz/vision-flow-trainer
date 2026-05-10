@@ -91,17 +91,31 @@ export function useCanvasRenderer(
         canvas.style.height = `${nextHeight}px`;
       }
 
-      requestAnimationFrame(drawStillFrame);
+      drawStillFrame();
     };
 
     resizeCanvas();
 
-    const observer = new ResizeObserver(resizeCanvas);
+    // iOS Safari can emit several ResizeObserver callbacks per frame while the
+    // address bar moves during scroll. Collapsing them avoids repeatedly
+    // clearing the canvas backing store and producing visible white flashes.
+    let rafId = 0;
+    const debouncedResize = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(resizeCanvas);
+    };
+
+    const observer = new ResizeObserver(debouncedResize);
     observer.observe(host);
 
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
   }, [canvasRef, hostRef]);
 
+  // Draw one still frame when paused and relevant inputs change. Explicit deps
+  // prevent this from competing with the animation loop on every React render.
   useEffect(() => {
     const canvas = canvasRef.current;
     const { width, height } = sizeRef.current;
@@ -112,7 +126,7 @@ export function useCanvasRenderer(
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawRef.current(ctx, width, height, elapsedRef.current, backgroundElapsedRef.current, 0);
     }
-  });
+  }, [canvasRef, running, resetKey]);
 
   useEffect(() => {
     if (!running) {
