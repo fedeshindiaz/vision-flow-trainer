@@ -995,6 +995,13 @@ google-cast-launcher.cast-launcher-icon {
   backdrop-filter: blur(20px);
 }
 
+.apple-environment.is-focus-mode .apple-safe-session .apple-safe-exit-button,
+.apple-environment.is-focus-mode .apple-safe-session .apple-session-control,
+.apple-environment.is-focus-mode .apple-safe-session .apple-exit-confirm {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 .apple-exit-confirm strong {
   display: block;
   font-size: 17px;
@@ -1650,6 +1657,6 @@ google-cast-launcher.cast-launcher-icon {
   }
 
   .viewport {
-    min-height: 70dvh;
+    min-height: 70svh;
   }
 }
