@@ -11,6 +11,7 @@ import {
 } from "../cast/castMessages";
 import { protocols } from "../config/protocols";
 import { formatTime } from "../utils";
+import { useRouteHead } from "../hooks/useRouteHead";
 
 const RECEIVER_SDK_URL = "https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js";
 const initialProtocol = protocols.find((protocol) => protocol.id === "okn-1") ?? protocols[0];
@@ -63,6 +64,13 @@ const defaultState: SharedExerciseState = {
 };
 
 export default function CastReceiver() {
+  useRouteHead({
+    title: "ONUr | Receptor de Entrenamiento (Cast)",
+    description:
+      "Pantalla receptora Google Cast de ONUr: muestra los estímulos visuales del protocolo en curso enviados desde el dispositivo del terapeuta.",
+    canonicalPath: "/cast-receiver",
+    robots: "noindex,follow",
+  });
   const [sharedState, setSharedState] = useState<SharedExerciseState>(defaultState);
   const [receiverStatus, setReceiverStatus] = useState<ReceiverReadyPayload["status"]>("waiting");
   const [receiverReady, setReceiverReady] = useState(false);
