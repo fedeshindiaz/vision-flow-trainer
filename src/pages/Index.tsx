@@ -4,19 +4,16 @@ import { CastDebugPanel } from "../components/CastDebugPanel";
 import { BackgroundPanel } from "../components/panels/BackgroundPanel";
 import { ObjectivePanel } from "../components/panels/ObjectivePanel";
 import { ParameterPanel } from "../components/panels/ParameterPanel";
-import { ProtocolPanel } from "../components/panels/ProtocolPanel";
 import { SafetyModal } from "../components/SafetyModal";
 import { SessionMetrics } from "../components/session/SessionMetrics";
 import { SessionControls } from "../components/session/SessionControls";
 import { SessionViewport } from "../components/session/SessionViewport";
-import { protocols } from "../config/protocols";
 import { useCastSender } from "../hooks/useCastSender";
 import { useAppleSafeScrollLock } from "../hooks/useAppleSafeScrollLock";
-import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useExerciseSession } from "../hooks/useExerciseSession";
 import { useFocusMode } from "../hooks/useFocusMode";
 import { playMetronomeClick, unlockMetronomeAudio, useMetronome } from "../hooks/useMetronome";
-import type { BackgroundConfig, ObjectiveConfig, Protocol } from "../types";
+import type { BackgroundConfig, ObjectiveConfig } from "../types";
 import { getDeviceEnvironment } from "../utils/deviceDetection";
 import { useRouteHead } from "../hooks/useRouteHead";
 
@@ -35,14 +32,10 @@ export default function Index() {
   const { focusMode, focusFeedback, focusHostRef, enterFocusMode, exitFocusMode } = useFocusMode({
     isAppleEnvironment: deviceEnvironment.isAppleEnvironment,
   });
-  const [protocolCategory, setProtocolCategory] = useState("Todos");
-  const [query, setQuery] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
-  const debouncedQuery = useDebouncedValue(query, 180);
 
   const {
-    selectedProtocolId,
     selectedProtocol,
     background,
     objective,
@@ -83,27 +76,9 @@ export default function Index() {
     setRest,
     setMetronomeEnabled,
     resetSession: resetSessionAction,
-    applyProtocol: applyProtocolAction,
     handlePlayPause: handlePlayPauseAction,
     handleSkip: handleSkipAction,
   } = actions;
-
-  const visibleProtocols = useMemo(() => {
-    const base =
-      protocolCategory === "Todos"
-        ? protocols
-        : protocols.filter((protocol) => protocol.category === protocolCategory);
-    const normalizedQuery = debouncedQuery.trim().toLowerCase();
-
-    if (!normalizedQuery) return base;
-
-    return base.filter((protocol) => {
-      const haystack = `${protocol.name} ${protocol.category} ${protocol.module} ${
-        protocol.sourceVideo ?? ""
-      } ${protocol.background.type} ${protocol.objective.mode} ${protocol.cue} ${protocol.head} ${protocol.eyes} ${protocol.level}`.toLowerCase();
-      return haystack.includes(normalizedQuery);
-    });
-  }, [debouncedQuery, protocolCategory]);
 
   const beat = useMetronome(
     metronomeActive,
@@ -112,22 +87,6 @@ export default function Index() {
     resetKey,
     tempoStartedAtMs,
     tempoAccumulatedElapsedMs,
-  );
-
-  const applyProtocol = useCallback(
-    (protocol: Protocol) => {
-      applyProtocolAction(protocol);
-      void castSender.sendCommand("SET_PROTOCOL", {
-        selectedProtocolId: protocol.id,
-        selectedProtocolName: protocol.name,
-        selectedProtocolCategory: protocol.category,
-        background: protocol.background,
-        objective: protocol.objective,
-        frequencyHz: protocol.frequencyHz,
-        metronomeEnabled: protocol.metronome,
-      });
-    },
-    [applyProtocolAction, castSender],
   );
 
   const resetSession = useCallback(() => {
@@ -162,10 +121,6 @@ export default function Index() {
     handleSkipAction();
     void castSender.sendCommand("SKIP", session.sharedState);
   }, [castSender, handleSkipAction, session.sharedState]);
-
-  const handleCategoryChange = useCallback((category: string) => {
-    setProtocolCategory(category);
-  }, []);
 
   const handleBackgroundChange = useCallback(
     (value: BackgroundConfig) => {
@@ -324,17 +279,6 @@ export default function Index() {
                 onReset={resetSession}
               />
             </section>
-
-            <ProtocolPanel
-              protocols={protocols}
-              visibleProtocols={visibleProtocols}
-              selectedProtocolId={selectedProtocolId}
-              protocolCategory={protocolCategory}
-              query={query}
-              onCategoryChange={handleCategoryChange}
-              onQueryChange={setQuery}
-              onApplyProtocol={applyProtocol}
-            />
 
             <ParameterPanel
               frequencyHz={frequencyHz}

@@ -5,8 +5,7 @@ import type { BackgroundConfig, ObjectiveConfig, Protocol, SessionState } from "
 import { clamp } from "../utils";
 import { useVisualClock } from "./useVisualClock";
 
-const STORAGE_KEY = "onur.exerciseConfig.v1";
-const initialProtocol = protocols.find((protocol) => protocol.id === "okn-1") ?? protocols[0];
+const initialProtocol = protocols.find((protocol) => protocol.id === "guided-custom") ?? protocols[0];
 
 const standardDefaults = {
   amplitude: 42,
@@ -69,73 +68,24 @@ function getInitialSet(setCount: number) {
   return setCount > 0 ? 1 : 0;
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object";
-}
-
-function isBackgroundConfig(value: unknown): value is BackgroundConfig {
-  return isObject(value) && typeof value.enabled === "boolean" && typeof value.type === "string" && typeof value.direction === "string";
-}
-
-function isObjectiveConfig(value: unknown): value is ObjectiveConfig {
-  return isObject(value) && typeof value.enabled === "boolean" && typeof value.mode === "string" && typeof value.direction === "string";
-}
-
-function numberFromStorage(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
-}
-
-function readStoredConfig(): Partial<ExerciseSessionConfig> {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const selectedProtocolId =
-      typeof parsed.selectedProtocolId === "string" && protocols.some((protocol) => protocol.id === parsed.selectedProtocolId)
-        ? parsed.selectedProtocolId
-        : undefined;
-
-    return {
-      selectedProtocolId,
-      background: isBackgroundConfig(parsed.background) ? parsed.background : undefined,
-      objective: isObjectiveConfig(parsed.objective) ? parsed.objective : undefined,
-      frequencyHz: numberFromStorage(parsed.frequencyHz),
-      amplitude: numberFromStorage(parsed.amplitude),
-      targetSize: numberFromStorage(parsed.targetSize),
-      density: numberFromStorage(parsed.density),
-      stripeSize: numberFromStorage(parsed.stripeSize),
-      duration: numberFromStorage(parsed.duration),
-      sets: numberFromStorage(parsed.sets),
-      rest: numberFromStorage(parsed.rest),
-      metronomeEnabled: typeof parsed.metronomeEnabled === "boolean" ? parsed.metronomeEnabled : undefined,
-    };
-  } catch {
-    return {};
-  }
-}
-
 function createInitialState(): ExerciseSessionState {
-  const stored = readStoredConfig();
-  const protocol = protocols.find((item) => item.id === stored.selectedProtocolId) ?? initialProtocol;
-  const duration = stored.duration ?? protocol.defaults?.duration ?? standardDefaults.duration;
-  const sets = stored.sets ?? protocol.defaults?.sets ?? standardDefaults.sets;
+  const protocol = initialProtocol;
+  const duration = protocol.defaults?.duration ?? standardDefaults.duration;
+  const sets = protocol.defaults?.sets ?? standardDefaults.sets;
 
   return {
     selectedProtocolId: protocol.id,
-    background: stored.background ?? protocol.background,
-    objective: stored.objective ?? protocol.objective,
-    frequencyHz: stored.frequencyHz ?? protocol.frequencyHz,
-    amplitude: stored.amplitude ?? protocol.defaults?.amplitude ?? standardDefaults.amplitude,
-    targetSize: stored.targetSize ?? protocol.defaults?.targetSize ?? standardDefaults.targetSize,
-    density: stored.density ?? protocol.defaults?.density ?? standardDefaults.density,
-    stripeSize: stored.stripeSize ?? protocol.defaults?.stripeSize ?? standardDefaults.stripeSize,
+    background: protocol.background,
+    objective: protocol.objective,
+    frequencyHz: protocol.frequencyHz,
+    amplitude: protocol.defaults?.amplitude ?? standardDefaults.amplitude,
+    targetSize: protocol.defaults?.targetSize ?? standardDefaults.targetSize,
+    density: protocol.defaults?.density ?? standardDefaults.density,
+    stripeSize: protocol.defaults?.stripeSize ?? standardDefaults.stripeSize,
     duration,
     sets,
-    rest: stored.rest ?? protocol.defaults?.rest ?? standardDefaults.rest,
-    metronomeEnabled: stored.metronomeEnabled ?? protocol.metronome,
+    rest: protocol.defaults?.rest ?? standardDefaults.rest,
+    metronomeEnabled: protocol.metronome,
     running: false,
     sessionState: "idle",
     timeLeft: duration,
@@ -287,46 +237,6 @@ export function useExerciseSession() {
   const visualRunning = state.running && state.sessionState === "playing";
   const metronomeActive = visualRunning && state.metronomeEnabled;
   const sessionLocked = state.sessionState === "playing" || state.sessionState === "resting";
-  const configForStorage = useMemo<ExerciseSessionConfig>(
-    () => ({
-      selectedProtocolId: state.selectedProtocolId,
-      background: state.background,
-      objective: state.objective,
-      frequencyHz: state.frequencyHz,
-      amplitude: state.amplitude,
-      targetSize: state.targetSize,
-      density: state.density,
-      stripeSize: state.stripeSize,
-      duration: state.duration,
-      sets: state.sets,
-      rest: state.rest,
-      metronomeEnabled: state.metronomeEnabled,
-    }),
-    [
-      state.amplitude,
-      state.background,
-      state.density,
-      state.duration,
-      state.frequencyHz,
-      state.metronomeEnabled,
-      state.objective,
-      state.rest,
-      state.selectedProtocolId,
-      state.sets,
-      state.stripeSize,
-      state.targetSize,
-    ],
-  );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(configForStorage));
-    } catch {
-      // La app sigue funcionando si el navegador bloquea almacenamiento.
-    }
-  }, [configForStorage]);
 
   useEffect(() => {
     if (!state.running) return undefined;
