@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { BackgroundConfig, ObjectiveConfig } from "../../types";
 import { useCanvasRenderer } from "../../hooks/useCanvasRenderer";
 import { drawBackgroundPattern } from "./drawBackgroundPattern";
@@ -37,6 +37,41 @@ export function VisualCanvas({
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const backgroundPhaseRef = useRef({ x: 0, y: 0 });
+  const stillFrameKey = useMemo(
+    () =>
+      [
+        background.enabled,
+        background.type,
+        background.direction,
+        objective.enabled,
+        objective.mode,
+        objective.direction,
+        frequencyHz,
+        amplitude,
+        targetSize,
+        density,
+        stripeSize,
+        syncElapsedMs,
+        syncStartMs ?? "local",
+        syncBaseElapsedMs,
+      ].join("|"),
+    [
+      amplitude,
+      background.direction,
+      background.enabled,
+      background.type,
+      density,
+      frequencyHz,
+      objective.direction,
+      objective.enabled,
+      objective.mode,
+      stripeSize,
+      syncBaseElapsedMs,
+      syncElapsedMs,
+      syncStartMs,
+      targetSize,
+    ],
+  );
 
   useEffect(() => {
     backgroundPhaseRef.current = { x: 0, y: 0 };
@@ -75,6 +110,7 @@ export function VisualCanvas({
     syncElapsedMs / 1000,
     syncStartMs,
     syncBaseElapsedMs / 1000,
+    stillFrameKey,
   );
 
   return (

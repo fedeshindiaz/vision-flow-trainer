@@ -18,6 +18,7 @@ export function useCanvasRenderer(
   syncElapsedSeconds = 0,
   syncStartMs: number | null = null,
   syncBaseElapsedSeconds = 0,
+  stillFrameKey: string | number = 0,
 ) {
   const elapsedRef = useRef(0);
   const backgroundElapsedRef = useRef(0);
@@ -126,7 +127,7 @@ export function useCanvasRenderer(
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawRef.current(ctx, width, height, elapsedRef.current, backgroundElapsedRef.current, 0);
     }
-  }, [canvasRef, running, resetKey]);
+  }, [canvasRef, running, resetKey, stillFrameKey]);
 
   useEffect(() => {
     if (!running) {
