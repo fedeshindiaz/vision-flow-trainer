@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useRef } from "react";
 import { Icon } from "./ui";
 
 interface CastButtonProps {
@@ -13,15 +13,7 @@ export function CastButton({ statusLabel, isConfigured, sdkStatus, isConnected, 
   const launcherRef = useRef<HTMLElement | null>(null);
   const disabled = !isConfigured || sdkStatus === "loading" || sdkStatus === "error" || sdkStatus === "unavailable";
 
-  const handleLauncherProxy = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target === launcherRef.current) return;
-    launcherRef.current?.click();
-  };
-
-  const handleLauncherKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-
-    event.preventDefault();
+  const handleLauncherProxy = () => {
     launcherRef.current?.click();
   };
 
@@ -37,13 +29,12 @@ export function CastButton({ statusLabel, isConfigured, sdkStatus, isConnected, 
   }
 
   return (
-    <div
+    <button
+      type="button"
       className={`cast-control ${isConnected ? "cast-control-connected" : ""}`}
       title={lastError || statusLabel}
-      role="button"
-      tabIndex={0}
       onClick={handleLauncherProxy}
-      onKeyDown={handleLauncherKey}
+      aria-label={`Transmitir. ${statusLabel}`}
     >
       <span className="cast-icon-stack" aria-hidden="true">
         <Icon name="cast" />
@@ -55,6 +46,6 @@ export function CastButton({ statusLabel, isConfigured, sdkStatus, isConnected, 
       </span>
       <span className="cast-control-main">Transmitir</span>
       <small>{statusLabel}</small>
-    </div>
+    </button>
   );
 }

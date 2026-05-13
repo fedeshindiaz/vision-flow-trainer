@@ -136,6 +136,8 @@ export function Stepper({
 }) {
   const precision = getDecimalPrecision(step);
   const formattedValue = precision > 0 ? value.toFixed(precision) : String(value);
+  const decrementDisabled = disabled || value <= min;
+  const incrementDisabled = disabled || value >= max;
   const changeBy = (delta: number) => {
     const nextValue = clamp(value + delta, min, max);
 
@@ -146,14 +148,14 @@ export function Stepper({
     <div className={`stepper ${disabled ? "control-disabled" : ""}`}>
       <span className="stepper-label">{label}</span>
       <div className="stepper-body">
-        <button type="button" disabled={disabled} onClick={() => changeBy(-step)}>
+        <button type="button" disabled={decrementDisabled} onClick={() => changeBy(-step)}>
           <Icon name="minus" />
         </button>
         <strong>
           {formattedValue}
           <small>{unit}</small>
         </strong>
-        <button type="button" disabled={disabled} onClick={() => changeBy(step)}>
+        <button type="button" disabled={incrementDisabled} onClick={() => changeBy(step)}>
           <Icon name="plus" />
         </button>
       </div>
