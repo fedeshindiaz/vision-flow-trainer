@@ -1,0 +1,9 @@
+# ONUr | Otoneuro Uruguay Rehabilitación
+
+> Herramienta visual web para entrenamiento vestíbulo-visual: protocolos RVO (x1, x2), estímulos optocinéticos, seguimiento suave (Lissajous) y sacadas correctivas, con metrónomo configurable y modo pantalla para proyección.
+
+ONUr está diseñada para profesionales de rehabilitación otoneurológica. Permite seleccionar protocolos prediseñados, configurar fondo y objetivo visual, ajustar frecuencia/amplitud/duración, y ejecutar sesiones por sets con descansos.
+
+## Pages
+
+- [Inicio](/): Aplicación principal con catálogo de protocolos, panel de parámetros y viewport de entrenamiento visual.
