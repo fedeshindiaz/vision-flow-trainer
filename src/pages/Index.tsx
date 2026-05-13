@@ -18,10 +18,17 @@ import { useFocusMode } from "../hooks/useFocusMode";
 import { playMetronomeClick, unlockMetronomeAudio, useMetronome } from "../hooks/useMetronome";
 import type { BackgroundConfig, ObjectiveConfig, Protocol } from "../types";
 import { getDeviceEnvironment } from "../utils/deviceDetection";
+import { useRouteHead } from "../hooks/useRouteHead";
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? "0.0.0";
 
 export default function Index() {
+  useRouteHead({
+    title: "ONUr | Entrenamiento vestíbulo-visual online",
+    description:
+      "Plataforma ONUr para terapeutas: protocolos RVO x1/x2, optocinéticos, seguimiento suave y sacadas correctivas con metrónomo y modo pantalla.",
+    canonicalPath: "/",
+  });
   const session = useExerciseSession();
   const castSender = useCastSender(session.sharedState);
   const deviceEnvironment = useMemo(() => getDeviceEnvironment(), []);
